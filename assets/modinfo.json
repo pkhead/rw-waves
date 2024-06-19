@@ -1,0 +1,10 @@
+{
+    "id": "pkhead.waves",
+    "name": "Arena Waves",
+    "version": "0.1.0",
+    "target_game_version": "v1.9.15",
+    "authors": "pkhead",
+    "description": "ALPHA WAVES MODE",
+    "tags": [],
+    "checksum_override_version": false
+}

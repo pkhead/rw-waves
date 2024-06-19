@@ -1,0 +1,9 @@
+# Visual Studio data
+*/.vs
+
+# MSBuild output
+/plugin/bin
+/plugin/obj
+
+# mod build output
+/out
