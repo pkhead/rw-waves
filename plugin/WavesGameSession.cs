@@ -11,9 +11,6 @@ class WavesGameSession : ArenaGameSession
     // if all tracked creatures are dead, initiate the next wave
     private readonly List<AbstractCreature> trackedCreatures;
 
-    // used for the creature dissolve disappear animation
-    private readonly List<DissolveBubbler> dissolveBubblers = new();
-
     public int wave = -1;
     private int nextWaveTimer = -1;
 
@@ -277,9 +274,9 @@ class WavesGameSession : ArenaGameSession
                 {
                     noCreaturesRemaining = false;
                 }
-                else if (creature.realizedCreature is not null)
+                else if (creature.realizedCreature?.room is not null)
                 {
-                    dissolveBubblers.Add(new DissolveBubbler(creature.realizedCreature));
+                    creature.realizedCreature.room.AddObject(new DespawnAnimation(creature.realizedCreature));
                     trackedCreatures.RemoveAt(i);
                 }
             }
@@ -287,15 +284,6 @@ class WavesGameSession : ArenaGameSession
             if (noCreaturesRemaining)
             {
                 nextWaveTimer = 80;
-            }
-        }
-
-        // update dissolve animation for dead creatures
-        for (int i = dissolveBubblers.Count - 1; i >= 0; i--)
-        {
-            if (!dissolveBubblers[i].Update())
-            {
-                dissolveBubblers.RemoveAt(i);
             }
         }
     }

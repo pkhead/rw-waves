@@ -14,19 +14,21 @@ class DissolveBubble : CosmeticSprite
     public float dist;
     private Color color;
 
-	public DissolveBubble(Vector2 pos, float intensity)
+	public DissolveBubble(Vector2 originPt, float intensity)
 	{
-        originPoint = pos;
+        originPoint = originPt;
+
         maxScale = Mathf.Max(0.1f, Random.value * 0.15f + intensity);
 
         angle = Random.Range(0f, 2f * Mathf.PI);
         dist = Random.Range(0f, 4f);
 
+        pos.x = originPoint.x + Mathf.Cos(angle) * dist;
+        pos.y = originPoint.y + Mathf.Sin(angle) * dist;
 		lastPos = pos;
+
 		life = 1f;
 		lifeTime = 60;
-
-        color = new Color(Random.value, Random.value, Random.value);
 	}
 
 	public override void Update(bool eu)
@@ -91,32 +93,30 @@ class DissolveBubble : CosmeticSprite
 	}
 }
 
-class DissolveBubbler
+class DespawnAnimation : UpdatableAndDeletable
 {
     public readonly Creature creature;
-    private readonly Room room;
     private int time = 0;
     private int phase = 0;
 
     private readonly List<Vector2> curvePositions = new();
 
-    public DissolveBubbler(Creature creature)
+    public DespawnAnimation(Creature creature) : base()
     {
         this.creature = creature;
-        room = creature.room;
     }
 
-    /// <summary>
-    /// Update the DissolveBubbler.
-    /// </summary>
-    /// <returns>False if the DissolveBubbler is no longer active.</returns>
-    public bool Update()
+    public override void Update(bool eu)
     {
-        if (phase == 3) return false;
+        if (phase == 3)
+        {
+            Destroy();
+        }
+
         if (phase == 0 && creature.room is null)
         {
             creature.abstractCreature.Room?.RemoveEntity(creature.abstractCreature);
-            return false;
+            Destroy();
         }
 
         if (creature.room is not null)
@@ -139,6 +139,9 @@ class DissolveBubbler
 
             if (animationProgress >= 1f)
             {
+                creature.AllGraspsLetGoOfThisObject(true);
+                creature.LoseAllGrasps();
+                creature.abstractCreature.LoseAllStuckObjects();
                 creature.room.RemoveObject(creature);
                 phase++;
             }
@@ -150,14 +153,12 @@ class DissolveBubbler
             if (time <= 0)
             {
                 phase++;
-                return false;
+                Destroy();
             }
 
             var animationProgress = time / 400f;
             SpawnBubble(animationProgress * 2.5f);
         }
-
-        return true;
     }
 
     private void SpawnBubble(float scale)
