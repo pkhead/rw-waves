@@ -5,5 +5,8 @@
 /plugin/bin
 /plugin/obj
 
+# workshop dependencies
+/deps
+
 # mod build output
 /out

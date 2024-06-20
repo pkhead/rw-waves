@@ -42,4 +42,10 @@
 			<Private>true</Private>
 		</Reference>
 	</ItemGroup>
+
+	<ItemGroup>
+		<Reference Include="../deps/DevConsole.dll">
+			<Private>true</Private>
+		</Reference>
+	</ItemGroup>
 </Project>
