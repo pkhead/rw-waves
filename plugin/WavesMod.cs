@@ -5,7 +5,6 @@ using BepInEx;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using DevConsole.Commands;
-using UnityEngine;
 
 // allow access to private members of Rain World code
 #pragma warning disable CS0618
@@ -50,9 +49,9 @@ namespace WavesMod
                     {
                         InitDevConsole();
                     }
-                    catch (Exception e)
+                    catch (System.IO.FileNotFoundException)
                     {
-                        logger.LogError("Dev console not found! " + e);
+                        logger.LogError("Dev console not found!");
                     }
                 }
                 catch (Exception e)
