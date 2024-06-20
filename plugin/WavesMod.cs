@@ -14,7 +14,7 @@ using DevConsole.Commands;
 namespace WavesMod
 {
     [BepInPlugin(MOD_ID, "Waves", VERSION)]
-    public partial class WavesMod : BaseUnityPlugin
+    partial class WavesMod : BaseUnityPlugin
     {
         public static WavesMod Instance;
 
@@ -24,6 +24,7 @@ namespace WavesMod
 
         private bool isInit = false;
         public BepInEx.Logging.ManualLogSource logger;
+        public SpriteLeaserMod spriteLeaserMod;
 
         public WavesMod()
         {
@@ -42,6 +43,8 @@ namespace WavesMod
                 {
                     if (isInit) return;
                     isInit = true;
+
+                    spriteLeaserMod = new SpriteLeaserMod();
 
                     InitHooks();
 
@@ -88,6 +91,8 @@ namespace WavesMod
                     logger.LogError("Could not inject IL.RainWorldGame.ctor: " + e.ToString());
                 }
             };
+
+            spriteLeaserMod.InitHooks();
         }
 
         private void InitDevConsole()

@@ -10,6 +10,10 @@ class WavesGameSession : ArenaGameSession
 {
     // if all tracked creatures are dead, initiate the next wave
     private readonly List<AbstractCreature> trackedCreatures;
+
+    // used for the creature dissolve disappear animation
+    private readonly List<DissolveBubbler> dissolveBubblers = new();
+
     public int wave = -1;
     private int nextWaveTimer = -1;
 
@@ -200,7 +204,7 @@ class WavesGameSession : ArenaGameSession
         trackedCreatures.Clear();
         var spawnData = spawnTable[Math.Min(wave, spawnTable.Length - 1)];
 
-        int creaturesRemaining = Math.Min(Random.Range(spawnData.minCreatures, spawnData.maxCreatures), availableDens.Count);
+        int creaturesRemaining = Math.Min(Random.Range(spawnData.minCreatures, spawnData.maxCreatures+1), availableDens.Count);
         void SpawnCreature(CreatureTemplate.Type type)
         {
             var denIndexIndex = Random.Range(0, availableDens.Count); // the index of the den index
@@ -243,7 +247,7 @@ class WavesGameSession : ArenaGameSession
         }
 
         while (creaturesRemaining > 0)
-            SpawnCreature(randomSpawns[Random.Range(0, randomSpawns.Count - 1)]);
+            SpawnCreature(randomSpawns[Random.Range(0, randomSpawns.Count)]);
     }
 
     public override bool ShouldSessionEnd()
@@ -255,6 +259,8 @@ class WavesGameSession : ArenaGameSession
     {
         base.Update();
 
+        if (game.paused) return;
+
         if (nextWaveTimer > 0)
         {
             if (--nextWaveTimer == 0)
@@ -263,18 +269,33 @@ class WavesGameSession : ArenaGameSession
         else
         {
             bool noCreaturesRemaining = true;
-            foreach (var creature in trackedCreatures)
+            for (int i = trackedCreatures.Count - 1; i >= 0; i--)
             {
+                var creature = trackedCreatures[i];
+
                 if (creature.state.alive)
                 {
                     noCreaturesRemaining = false;
-                    break;
+                }
+                else if (creature.realizedCreature is not null)
+                {
+                    dissolveBubblers.Add(new DissolveBubbler(creature.realizedCreature));
+                    trackedCreatures.RemoveAt(i);
                 }
             }
 
             if (noCreaturesRemaining)
             {
                 nextWaveTimer = 80;
+            }
+        }
+
+        // update dissolve animation for dead creatures
+        for (int i = dissolveBubblers.Count - 1; i >= 0; i--)
+        {
+            if (!dissolveBubblers[i].Update())
+            {
+                dissolveBubblers.RemoveAt(i);
             }
         }
     }
@@ -294,6 +315,7 @@ class WavesGameSession : ArenaGameSession
                 // creature is not realized, probably still in its den or something.
                 // just delete the creature.
                 creature.Room.RemoveEntity(creature);
+                creature.Destroy();
                 trackedCreatures.RemoveAt(i);
             }
         }

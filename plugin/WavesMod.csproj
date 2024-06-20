@@ -41,11 +41,13 @@
 		<Reference Include="$(RainWorldDir)/RainWorld_Data/Managed/UnityEngine.dll">
 			<Private>true</Private>
 		</Reference>
+
+		<Reference Include="$(RainWorldDir)/RainWorld_Data/Managed/Unity.Mathematics.dll">
+			<Private>true</Private>
+		</Reference>
 	</ItemGroup>
 
 	<ItemGroup>
-		<Reference Include="../deps/DevConsole.dll">
-			<Private>true</Private>
-		</Reference>
+		<Reference Include="../deps/DevConsole.dll" />
 	</ItemGroup>
 </Project>
