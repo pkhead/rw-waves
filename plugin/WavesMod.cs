@@ -4,6 +4,7 @@ using System.Security.Permissions;
 using BepInEx;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
+using DevConsole.Commands;
 using UnityEngine;
 
 // allow access to private members of Rain World code
@@ -44,6 +45,15 @@ namespace WavesMod
                     isInit = true;
 
                     InitHooks();
+
+                    try
+                    {
+                        InitDevConsole();
+                    }
+                    catch (Exception e)
+                    {
+                        logger.LogError("Dev console not found! " + e);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -79,6 +89,37 @@ namespace WavesMod
                     logger.LogError("Could not inject IL.RainWorldGame.ctor: " + e.ToString());
                 }
             };
+        }
+
+        private void InitDevConsole()
+        {
+            new CommandBuilder("next_wave")
+                .RunGame((game, args) =>
+                {
+                    if (game.session is WavesGameSession session)
+                    {
+                        session.KillAll();
+                    }
+                })
+                .Register();
+            
+            new CommandBuilder("set_wave")
+                .RunGame((game, args) =>
+                {
+                    if (args.Length == 0) throw new ArgumentException("Expected int for argument 1, got null", nameof(args));
+                    
+                    if (!int.TryParse(args[0], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out int waveNumber))
+                    {
+                        throw new ArgumentException("Expected int for argument 1", nameof(args));
+                    }
+
+                    if (game.session is WavesGameSession session)
+                    {
+                        session.KillAll();
+                        session.wave = waveNumber - 1; // subtract 1, as killing all creatures will trigger the next wave
+                    }
+                })
+                .Register();
         }
     }
 }

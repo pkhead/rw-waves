@@ -10,7 +10,7 @@ class WavesGameSession : ArenaGameSession
 {
     // if all tracked creatures are dead, initiate the next wave
     private readonly List<AbstractCreature> trackedCreatures;
-    private int wave = -1;
+    public int wave = -1;
     private int nextWaveTimer = -1;
 
     private enum SpawnModifier
@@ -186,6 +186,7 @@ class WavesGameSession : ArenaGameSession
         Debug.Log("Spawn wave " + wave);
 
         var abstractRoom = game.world.GetAbstractRoom(0);
+        abstractRoom.realizedRoom?.PlaySound(SoundID.UI_Multiplayer_Game_Start, 0f, 1f, 1f);
 
         // get nodes that are dens
         var availableDens = new List<int>();
@@ -274,6 +275,26 @@ class WavesGameSession : ArenaGameSession
             if (noCreaturesRemaining)
             {
                 nextWaveTimer = 80;
+            }
+        }
+    }
+
+    public void KillAll()
+    {
+        for (int i = trackedCreatures.Count - 1; i >= 0; i--)
+        {
+            var creature = trackedCreatures[i];
+
+            if (creature.realizedCreature is not null)
+            {
+                creature.realizedCreature?.Die();
+            }
+            else
+            {
+                // creature is not realized, probably still in its den or something.
+                // just delete the creature.
+                creature.Room.RemoveEntity(creature);
+                trackedCreatures.RemoveAt(i);
             }
         }
     }
