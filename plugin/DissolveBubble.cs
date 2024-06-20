@@ -6,7 +6,6 @@ namespace WavesMod;
 
 class DissolveBubble : CosmeticSprite
 {
-	public Creature creature;
 	public float life;
     public float maxScale;
 	public int lifeTime;
@@ -15,62 +14,13 @@ class DissolveBubble : CosmeticSprite
     public float dist;
     private Color color;
 
-	public DissolveBubble(Creature creature, float intensity)
+	public DissolveBubble(Vector2 pos, float intensity)
 	{
-        List<Vector2> curvePositions = new();
-
-        if (false && creature.graphicsModule is LizardGraphics lizardGfx)
-        {
-            curvePositions.Add(lizardGfx.head.pos);
-
-            int numBodyCircles = lizardGfx.SpriteBodyCirclesEnd - lizardGfx.SpriteBodyCirclesStart;
-            for (int i = 0; i < numBodyCircles; i++)
-            {
-                curvePositions.Add(lizardGfx.BodyPosition(i, 0f));
-            }
-
-            for (int i = 0; i < lizardGfx.tail.Length; i++)
-            {
-                curvePositions.Add(lizardGfx.tail[i].pos);
-            }
-
-            // pick a random point along this "curve"
-            int index = Random.Range(0, curvePositions.Count - 1);
-            originPoint = Vector2.Lerp(curvePositions[index], curvePositions[index+1], Random.value);
-        }
-        else
-        {
-            for (int i = 0; i < creature.graphicsModule.bodyParts.Length; i++)
-            {
-                curvePositions.Add(creature.graphicsModule.bodyParts[i].pos);
-            }
-        }
-
-        // pick a random point along this "curve"
-        if (curvePositions.Count <= 1)
-        {
-            originPoint = curvePositions[0];
-        }
-        else
-        {
-            int index = Random.Range(0, curvePositions.Count - 1);
-            originPoint = Vector2.Lerp(curvePositions[index], curvePositions[index+1], Random.value);
-        }
-
-        /*if (graphicsModule.bodyParts.Length == 1)
-        {
-            originPoint = graphicsModule.bodyParts[0].pos;
-        }
-        else
-        {
-            int index = Random.Range(0, graphicsModule.bodyParts.Length - 2);
-            originPoint = Vector2.Lerp(graphicsModule.bodyParts[index].pos, graphicsModule.bodyParts[index+1].pos, Random.value * 1.2f - 0.1f);
-        }*/
-        
-        maxScale = Mathf.Max(0.1f, Random.value * 0.3f + intensity);
+        originPoint = pos;
+        maxScale = Mathf.Max(0.1f, Random.value * 0.15f + intensity);
 
         angle = Random.Range(0f, 2f * Mathf.PI);
-        dist = Random.Range(0f, 1f);
+        dist = Random.Range(0f, 4f);
 
 		lastPos = pos;
 		life = 1f;
@@ -97,11 +47,13 @@ class DissolveBubble : CosmeticSprite
 
 	public override void InitiateSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
 	{
+        // create circle mesh
 		sLeaser.sprites = new FSprite[1];
-		sLeaser.sprites[0] = new FSprite("Circle20", true)
+		sLeaser.sprites[0] = new FSprite("Futile_White", true)
         {
             scaleX = maxScale,
-            scaleY = maxScale
+            scaleY = maxScale,
+            shader = rCam.game.rainWorld.Shaders["VectorCircle"]
         };
 
 		AddToContainer(sLeaser, rCam, null);
@@ -115,8 +67,8 @@ class DissolveBubble : CosmeticSprite
 		sprite.x = Mathf.Lerp(lastPos.x, pos.x, timeStacker) - camPos.x;
 		sprite.y = Mathf.Lerp(lastPos.y, pos.y, timeStacker) - camPos.y;
 		sprite.color = color;
-        sprite.scaleX = scale;
-        sprite.scaleY = scale;
+        sprite.scaleX = 1f * scale;
+        sprite.scaleY = 1f * scale;
         
 		base.DrawSprites(sLeaser, rCam, timeStacker, camPos);
 	}
@@ -144,7 +96,9 @@ class DissolveBubbler
     public readonly Creature creature;
     private readonly Room room;
     private int time = 0;
-    private int nextSpawn = 0;
+    private int phase = 0;
+
+    private readonly List<Vector2> curvePositions = new();
 
     public DissolveBubbler(Creature creature)
     {
@@ -158,53 +112,80 @@ class DissolveBubbler
     /// <returns>False if the DissolveBubbler is no longer active.</returns>
     public bool Update()
     {
-        if (creature.room is null)
+        if (phase == 3) return false;
+        if (phase == 0 && creature.room is null)
         {
             creature.abstractCreature.Room?.RemoveEntity(creature.abstractCreature);
             return false;
         }
 
-        time++;
-        /*nextSpawn -= time / 120f;
-        if (nextSpawn < -10f) nextSpawn = -10f;
+        if (creature.room is not null)
+            UpdateParticleCurve();
 
-        while (nextSpawn < 0f)
+        if (phase == 0)
         {
-            room.AddObject(new DissolveBubble(graphicsModule, time / 4000f));
-            nextSpawn++;
+            time++;
+
+            var animationProgress = time / 400f;
+            SpawnBubble(animationProgress * 2.5f);
+
+            if (creature.graphicsModule is LizardGraphics lizardGfx)
+            {
+                lizardGfx.lightSource.setAlpha *= 1f - animationProgress;
+            }
+
+            var blackColor = creature.room.game.cameras[0].currentPalette.blackColor;
+            WavesMod.Instance.spriteLeaserMod.SetColorData(creature.graphicsModule, blackColor, animationProgress);
+
+            if (animationProgress >= 1f)
+            {
+                creature.room.RemoveObject(creature);
+                phase++;
+            }
         }
-
-        nextSpawn = 1f;*/
-        
-        /*if (nextSpawn == 0)
+        else if (phase == 1)
         {
-            room.AddObject(new DissolveBubble(creature, 1f));
-            nextSpawn = 2;
-        }
-        else
-        {
-            nextSpawn--;
-        }*/
+            time -= 4;
 
-        var animationProgress = time / 400f;
-        var scale = animationProgress * 2f;
+            if (time <= 0)
+            {
+                phase++;
+                return false;
+            }
 
-        room.AddObject(new DissolveBubble(creature, scale));
-
-        if (creature.graphicsModule is LizardGraphics lizardGfx)
-        {
-            lizardGfx.lightSource.setAlpha *= 1f - animationProgress;
-        }
-
-        var col = 1f - animationProgress;
-        WavesMod.Instance.spriteLeaserMod.SetTint(creature.graphicsModule, new Color(col, col, col));
-
-        if (animationProgress >= 1f)
-        {
-            creature.room.RemoveObject(creature);
-            return false;
+            var animationProgress = time / 400f;
+            SpawnBubble(animationProgress * 2.5f);
         }
 
         return true;
+    }
+
+    private void SpawnBubble(float scale)
+    {
+        // spawn a dissolve bubble on a random point along
+        // the particle curve
+        Vector2 originPoint;
+        if (curvePositions.Count <= 1)
+        {
+            originPoint = curvePositions[0];
+        }
+        else
+        {
+            int index = Random.Range(0, curvePositions.Count - 1);
+            originPoint = Vector2.Lerp(curvePositions[index], curvePositions[index+1], Random.value);
+        }
+
+        room.AddObject(new DissolveBubble(originPoint, scale));
+    }
+
+    private void UpdateParticleCurve()
+    {
+        var graphics = creature.graphicsModule;
+        curvePositions.Clear();
+
+        for (int i = 0; i < graphics.bodyParts.Length; i++)
+        {
+            curvePositions.Add(graphics.bodyParts[i].pos);
+        }
     }
 }

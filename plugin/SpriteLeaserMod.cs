@@ -1,8 +1,5 @@
 using UnityEngine;
 using System.Runtime.CompilerServices;
-using MonoMod.Cil;
-using Mono.Cecil.Cil;
-using System;
 
 namespace WavesMod;
 
@@ -10,11 +7,13 @@ class SpriteLeaserMod
 {
     class TintData
     {
-        public Color tint;
+        public Color targetColor;
+        public float alpha;
 
         public TintData()
         {
-            tint = Color.white;
+            targetColor = Color.white;
+            alpha = 0f;
         }
     }
 
@@ -41,7 +40,9 @@ class SpriteLeaserMod
         
         for (int i = 0; i < self.sprites.Length; i++)
         {
-            fSpriteCwt.GetOrCreateValue(self.sprites[i]).tint = extraData.tint;
+            var tintData = fSpriteCwt.GetOrCreateValue(self.sprites[i]);
+            tintData.targetColor = extraData.targetColor;
+            tintData.alpha = extraData.alpha;            
         }
     }
 
@@ -70,7 +71,8 @@ class SpriteLeaserMod
                     return;
                 
                 var colors = self._renderLayer.colors;
-                var tint = extraData.tint;
+                var alpha = extraData.alpha;
+                var targetColor = extraData.targetColor;
 
                 int numVerts, offset;
 
@@ -87,10 +89,11 @@ class SpriteLeaserMod
 
                 for (int i = 0; i < numVerts; i++)
                 {
-                    colors[offset + i].r *= tint.r;
-                    colors[offset + i].g *= tint.g;
-                    colors[offset + i].b *= tint.b;
-                    colors[offset + i].a *= tint.a;
+                    ref var color = ref colors[offset + i];
+                    color.r = color.r * (1f - alpha) + targetColor.r * alpha;
+                    color.g = color.g * (1f - alpha) + targetColor.g * alpha;
+                    color.b = color.b * (1f - alpha) + targetColor.b * alpha;
+                    color.a = color.a * (1f - alpha) + targetColor.a * alpha;
                 }
             }
         };
@@ -105,7 +108,8 @@ class SpriteLeaserMod
                     return;
                 
                 var colors = self._renderLayer.colors;
-                var tint = extraData.tint;
+                var alpha = extraData.alpha;
+                var targetColor = extraData.targetColor;
                 var offset = self._firstFacetIndex * 3;
 
                 if (self.customColor)
@@ -115,10 +119,10 @@ class SpriteLeaserMod
                         for (int j = 0; j < 3; j++)
                         {
                             ref var color = ref colors[(offset + i) * 3 + j];
-                            color.r *= tint.r;
-                            color.g *= tint.g;
-                            color.b *= tint.b;
-                            color.a *= tint.a;
+                            color.r = color.r * (1f - alpha) + targetColor.r * alpha;
+                            color.g = color.g * (1f - alpha) + targetColor.g * alpha;
+                            color.b = color.b * (1f - alpha) + targetColor.b * alpha;
+                            color.a = color.a * (1f - alpha) + targetColor.a * alpha;
                         }
                     }
                 }
@@ -127,26 +131,20 @@ class SpriteLeaserMod
                     for (int k = 0; k < self.triangles.Length * 3; k++)
                     {
                         ref var color = ref colors[offset + k];
-                        color.r *= tint.r;
-                        color.g *= tint.g;
-                        color.b *= tint.b;
-                        color.a *= tint.a;
+                        color.r = color.r * (1f - alpha) + targetColor.r * alpha;
+                        color.g = color.g * (1f - alpha) + targetColor.g * alpha;
+                        color.b = color.b * (1f - alpha) + targetColor.b * alpha;
+                        color.a = color.a * (1f - alpha) + targetColor.a * alpha;
                     }
                 }
             }
         };
     }
 
-    public void SetTint(IDrawable drawable, Color tint)
+    public void SetColorData(IDrawable drawable, Color color, float blend)
     {
-        drawableCwt.GetOrCreateValue(drawable).tint = tint;
-    }
-
-    public Color GetTint(IDrawable drawable)
-    {
-        if (!drawableCwt.TryGetValue(drawable, out var extraData))
-            return Color.white;
-        
-        return extraData.tint;
+        var colorData = drawableCwt.GetOrCreateValue(drawable);
+        colorData.targetColor = color;
+        colorData.alpha = blend;
     }
 }
