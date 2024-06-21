@@ -318,11 +318,42 @@ class WavesGameSession : ArenaGameSession
     }
 
     /// <summary>
-    /// Initialize hooks for creature behavior during
+    /// Initialize hooks for creature/arena behavior during
     /// a Waves game session
     /// </summary>
     public static void InitHooks()
     {
+        // this is the slugcat's personalized hell
+        On.ArenaBehaviors.ExitManager.ExitsOpen += (On.ArenaBehaviors.ExitManager.orig_ExitsOpen orig, ExitManager self) =>
+        {
+            if (self.gameSession is WavesGameSession)
+                return false;
+            
+            return orig(self);
+        };
+
+        // make sure creatures don't escape to their dens when injured
+        // (basically, same as the mmf option, except not dependent on mmf)        
+        On.LizardAI.WantToStayInDenUntilEndOfCycle += (On.LizardAI.orig_WantToStayInDenUntilEndOfCycle orig, LizardAI self) =>
+        {
+            if (self.creature.Room.world.game.session is WavesGameSession)
+                return false;
+            
+            return orig(self);
+        };
+
+        On.InjuryTracker.Utility += (On.InjuryTracker.orig_Utility orig, InjuryTracker self) =>
+        {
+            if (self.AI.creature.Room.world.game.session is WavesGameSession) return 0f;
+            return orig(self);
+        };
+
+        On.LizardAI.LizardInjuryTracker.Utility += (On.LizardAI.LizardInjuryTracker.orig_Utility orig, LizardAI.LizardInjuryTracker self) =>
+        {
+            if (self.AI.creature.Room.world.game.session is WavesGameSession) return 0f;
+            return orig(self);
+        };
+
         On.Fly.Update += (On.Fly.orig_Update orig, Fly self, bool eu) =>
         {
             orig(self, eu);
