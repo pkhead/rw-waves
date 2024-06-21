@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using ArenaBehaviors;
-using BepInEx;
 using UnityEngine;
 namespace WavesMod;
 using Random = UnityEngine.Random;
@@ -10,147 +9,10 @@ class WavesGameSession : ArenaGameSession
 {
     // if all tracked creatures are dead, initiate the next wave
     private readonly List<AbstractCreature> trackedCreatures;
+    private WavesCreatureSpawner creatureSpawner = null;
 
     public int wave = -1;
     private int nextWaveTimer = -1;
-
-    private enum SpawnModifier
-    {
-        None,
-        RandomSpawn
-    }
-
-    private struct WaveSpawn
-    {
-        public CreatureTemplate.Type template;
-        public SpawnModifier modifier;
-
-        public WaveSpawn(CreatureTemplate.Type template, SpawnModifier modifier = SpawnModifier.None)
-        {
-            this.template = template;
-            this.modifier = modifier;
-        }
-    }
-
-    private record WaveData
-    {
-        public int minCreatures, maxCreatures;
-        public WaveSpawn[] spawns;
-
-        public WaveData(int min, int max, WaveSpawn[] spawns)
-        {
-            minCreatures = min;
-            maxCreatures = max;
-            this.spawns = spawns;
-        }
-
-        public WaveData(int amount, WaveSpawn[] spawns)
-        {
-            minCreatures = amount;
-            maxCreatures = amount;
-            this.spawns = spawns;
-        }
-    }
-
-    private static readonly WaveData[] spawnTable = new WaveData[]
-    {
-        // Wave 1
-        new(
-            amount: 1,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.PinkLizard)
-            }
-        ),
-
-        // Wave 2
-        new(
-            amount: 2,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.PinkLizard),
-                new(CreatureTemplate.Type.PinkLizard)
-            }
-        ),
-
-        // Wave 3
-        new(
-            amount: 3,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.PinkLizard),
-                new(CreatureTemplate.Type.PinkLizard),
-                new(CreatureTemplate.Type.GreenLizard),
-            }
-        ),
-
-        // Wave 4
-        new(
-            amount: 3,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.PinkLizard),
-                new(CreatureTemplate.Type.BlueLizard),
-                new(CreatureTemplate.Type.GreenLizard),
-            }
-        ),
-
-        // Wave 5
-        new(
-            min: 3,
-            max: 4,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.GreenLizard),
-                new(CreatureTemplate.Type.PinkLizard),
-                new(CreatureTemplate.Type.BlueLizard, SpawnModifier.RandomSpawn),
-                new(CreatureTemplate.Type.WhiteLizard, SpawnModifier.RandomSpawn),
-            }
-        ),
-
-        // Wave 6
-        new(
-            min: 3,
-            max: 4,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.PinkLizard),
-                new(CreatureTemplate.Type.BlueLizard, SpawnModifier.RandomSpawn),
-                new(CreatureTemplate.Type.BlueLizard, SpawnModifier.RandomSpawn),
-                new(CreatureTemplate.Type.WhiteLizard, SpawnModifier.RandomSpawn),
-            }
-        ),
-
-        // Wave 7
-        new(
-            amount: 6,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.YellowLizard),
-                new(CreatureTemplate.Type.YellowLizard),
-                new(CreatureTemplate.Type.YellowLizard),
-                new(CreatureTemplate.Type.YellowLizard),
-                new(CreatureTemplate.Type.YellowLizard),
-                new(CreatureTemplate.Type.YellowLizard),
-            }
-        ),
-
-        // FINAL WAVE... goes on forever
-        new(
-            amount: 5,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.PinkLizard, SpawnModifier.RandomSpawn),
-                new(CreatureTemplate.Type.GreenLizard, SpawnModifier.RandomSpawn),
-                new(CreatureTemplate.Type.BlueLizard, SpawnModifier.RandomSpawn),
-                new(CreatureTemplate.Type.WhiteLizard, SpawnModifier.RandomSpawn),
-                new(CreatureTemplate.Type.CyanLizard, SpawnModifier.RandomSpawn),
-                new(CreatureTemplate.Type.YellowLizard, SpawnModifier.RandomSpawn),
-                new(CreatureTemplate.Type.Centipede, SpawnModifier.RandomSpawn),
-                new(CreatureTemplate.Type.Scavenger, SpawnModifier.RandomSpawn),
-            }
-        ),
-    };
 
     public WavesGameSession(RainWorldGame game) : base(game)
     {
@@ -204,29 +66,20 @@ class WavesGameSession : ArenaGameSession
 
         // spawn creatures
         trackedCreatures.Clear();
-        var spawnData = spawnTable[Math.Min(wave, spawnTable.Length - 1)];
+        var spawnData = WaveSpawnData.Data[Math.Min(wave, WaveSpawnData.Data.Length - 1)];
 
-        int creaturesRemaining = Math.Min(Random.Range(spawnData.minCreatures, spawnData.maxCreatures+1), availableDens.Count);
-        void SpawnCreature(CreatureTemplate.Type type)
-        {
-            var denIndexIndex = Random.Range(0, availableDens.Count); // the index of the den index
-            var coords = new WorldCoordinate(abstractRoom.index, -1, -1, availableDens[denIndexIndex]);
-
-            var template = StaticWorld.GetCreatureTemplate(type);
-            var creature = new AbstractCreature(game.world, template, null, coords, game.GetNewID());
-            abstractRoom.MoveEntityToDen(creature);
-
-            creaturesRemaining--;
-            availableDens.RemoveAt(denIndexIndex);
-            trackedCreatures.Add(creature);
-        }
+        int creaturesRemaining = Random.Range(spawnData.minCreatures, spawnData.maxCreatures+1);
+        List<CreatureTemplate.Type> spawnList = new();
 
         // spawn creatures not tagged with Random first
         for (int i = 0; i < spawnData.spawns.Length; i++)
         {
             if (creaturesRemaining == 0) return;
-            if (spawnData.spawns[i].modifier != SpawnModifier.RandomSpawn)
-                SpawnCreature(spawnData.spawns[i].template);
+            if (spawnData.spawns[i].modifier != WaveSpawnData.SpawnModifier.RandomSpawn)
+            {
+                spawnList.Add(spawnData.spawns[i].template);
+                creaturesRemaining--;
+            }
         }
 
         // then for the remainder of the creatures randomly choose a creature
@@ -234,7 +87,7 @@ class WavesGameSession : ArenaGameSession
         List<CreatureTemplate.Type> randomSpawns = new();
         for (int i = 0; i < spawnData.spawns.Length; i++)
         {
-            if (spawnData.spawns[i].modifier == SpawnModifier.RandomSpawn)
+            if (spawnData.spawns[i].modifier == WaveSpawnData.SpawnModifier.RandomSpawn)
                 randomSpawns.Add(spawnData.spawns[i].template);
         }
 
@@ -249,7 +102,13 @@ class WavesGameSession : ArenaGameSession
         }
 
         while (creaturesRemaining > 0)
-            SpawnCreature(randomSpawns[Random.Range(0, randomSpawns.Count)]);
+        {
+            spawnList.Add(randomSpawns[Random.Range(0, randomSpawns.Count)]);
+            creaturesRemaining--;
+        }
+        
+        creatureSpawner = new WavesCreatureSpawner(abstractRoom, spawnList.ToArray());
+        creatureSpawner.CreatureSpawned += OnSpawn;
     }
 
     public override bool ShouldSessionEnd()
@@ -257,11 +116,19 @@ class WavesGameSession : ArenaGameSession
         return thisFrameActivePlayers == 0;
     }
 
+    private void OnSpawn(AbstractCreature creature)
+    {
+        trackedCreatures.Add(creature);
+    }
+
     public override void Update()
     {
         base.Update();
 
         if (game.paused) return;
+
+        if (creatureSpawner is not null && creatureSpawner.Update())
+            creatureSpawner = null;
 
         if (nextWaveTimer > 0)
         {
