@@ -3,7 +3,10 @@ using System.Runtime.CompilerServices;
 
 namespace WavesMod;
 
-class SpriteLeaserMod
+/// <summary>
+/// Used to darken sprites during the despawn animation.
+/// </summary>
+static class SpriteTinter
 {
     class TintData
     {
@@ -17,15 +20,12 @@ class SpriteLeaserMod
         }
     }
 
-    private readonly ConditionalWeakTable<FSprite, TintData> fSpriteCwt = new();
-    private readonly ConditionalWeakTable<IDrawable, TintData> drawableCwt = new();
-
-    public SpriteLeaserMod()
-    {}
+    private static ConditionalWeakTable<FSprite, TintData> fSpriteCwt = new();
+    private static ConditionalWeakTable<IDrawable, TintData> drawableCwt = new();
 
     delegate void UpdateOrig(RoomCamera.SpriteLeaser self, float timeStacker, RoomCamera rCam, Vector2 camPos);
 
-    private void UpdateHook(
+    private static void UpdateHook(
             UpdateOrig orig, RoomCamera.SpriteLeaser self,
             float timeStacker, RoomCamera rCam, Vector2 camPos
     )
@@ -46,7 +46,7 @@ class SpriteLeaserMod
         }
     }
 
-    public void InitHooks()
+    public static void InitHooks()
     {
         // sprite leaser update hooks
         On.RoomCamera.SpriteLeaser.Update += (
@@ -141,7 +141,13 @@ class SpriteLeaserMod
         };
     }
 
-    public void SetColorData(IDrawable drawable, Color color, float blend)
+    public static void Reset()
+    {
+        fSpriteCwt = new();
+        drawableCwt = new();
+    }
+
+    public static void SetColorData(IDrawable drawable, Color color, float blend)
     {
         var colorData = drawableCwt.GetOrCreateValue(drawable);
         colorData.targetColor = color;

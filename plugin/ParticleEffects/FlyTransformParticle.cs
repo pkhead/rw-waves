@@ -1,7 +1,7 @@
 using RWCustom;
 using UnityEngine;
 
-namespace WavesMod;
+namespace WavesMod.ParticleEffects;
 
 class FlyTransformParticle : CosmeticSprite
 {

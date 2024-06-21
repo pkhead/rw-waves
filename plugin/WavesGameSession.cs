@@ -411,7 +411,7 @@ class WavesGameSession : ArenaGameSession
 
             for (int i = 0; i < 8; i++)
             {
-                self.room.AddObject(new FlyTransformParticle(self.mainBodyChunk.pos));
+                self.room.AddObject(new ParticleEffects.FlyTransformParticle(self.mainBodyChunk.pos));
             }
 
             self.Destroy();

@@ -24,7 +24,6 @@ namespace WavesMod
 
         private bool isInit = false;
         public BepInEx.Logging.ManualLogSource logger;
-        public SpriteLeaserMod spriteLeaserMod;
 
         public WavesMod()
         {
@@ -44,8 +43,7 @@ namespace WavesMod
                     if (isInit) return;
                     isInit = true;
 
-                    spriteLeaserMod = new SpriteLeaserMod();
-
+                    SpriteTinter.Reset();
                     InitHooks();
 
                     try
@@ -92,7 +90,7 @@ namespace WavesMod
                 }
             };
 
-            spriteLeaserMod.InitHooks();
+            SpriteTinter.InitHooks();
             WavesGameSession.InitHooks();
         }
 
