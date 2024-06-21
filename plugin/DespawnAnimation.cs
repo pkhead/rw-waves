@@ -14,7 +14,7 @@ class DissolveBubble : CosmeticSprite
     public float dist;
     private Color color;
 
-	public DissolveBubble(Vector2 originPt, float intensity)
+	public DissolveBubble(Vector2 originPt, float intensity, Color color)
 	{
         originPoint = originPt;
 
@@ -29,6 +29,7 @@ class DissolveBubble : CosmeticSprite
 
 		life = 1f;
 		lifeTime = 60;
+        this.color = color;
 	}
 
 	public override void Update(bool eu)
@@ -78,7 +79,6 @@ class DissolveBubble : CosmeticSprite
     public override void ApplyPalette(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, RoomPalette palette)
     {
         base.ApplyPalette(sLeaser, rCam, palette);
-        color = palette.blackColor;
     }
 
     public override void AddToContainer(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, FContainer newContatiner)
@@ -100,6 +100,7 @@ class DespawnAnimation : UpdatableAndDeletable
     private int phase = 0;
 
     private readonly List<Vector2> curvePositions = new();
+    private Color dissolveColor = Color.red;
 
     public DespawnAnimation(Creature creature) : base()
     {
@@ -120,22 +121,32 @@ class DespawnAnimation : UpdatableAndDeletable
         }
 
         if (creature.room is not null)
+        {
             UpdateParticleCurve();
+
+            // get creature color
+            // defaults to black
+            dissolveColor = room.game.cameras[0].currentPalette.blackColor;
+
+            /*if (creature is Lizard lizard && lizard.Template.type == CreatureTemplate.Type.WhiteLizard)
+            {
+                dissolveColor = (lizard.graphicsModule as LizardGraphics).whiteCamoColor;
+            }*/
+        }
 
         if (phase == 0)
         {
             time++;
 
             var animationProgress = time / 400f;
-            SpawnBubble(animationProgress * 2.5f);
+            SpawnBubble(animationProgress * 2.5f, dissolveColor);
 
             if (creature.graphicsModule is LizardGraphics lizardGfx)
             {
                 lizardGfx.lightSource.setAlpha *= 1f - animationProgress;
             }
 
-            var blackColor = creature.room.game.cameras[0].currentPalette.blackColor;
-            WavesMod.Instance.spriteLeaserMod.SetColorData(creature.graphicsModule, blackColor, animationProgress);
+            WavesMod.Instance.spriteLeaserMod.SetColorData(creature.graphicsModule, dissolveColor, animationProgress);
 
             if (animationProgress >= 1f)
             {
@@ -156,11 +167,11 @@ class DespawnAnimation : UpdatableAndDeletable
             }
 
             var animationProgress = time / 400f;
-            SpawnBubble(animationProgress * 2.5f);
+            SpawnBubble(animationProgress * 2.5f, dissolveColor);
         }
     }
 
-    private void SpawnBubble(float scale)
+    private void SpawnBubble(float scale, Color color)
     {
         // spawn a dissolve bubble on a random point along
         // the particle curve
@@ -175,7 +186,7 @@ class DespawnAnimation : UpdatableAndDeletable
             originPoint = Vector2.Lerp(curvePositions[index], curvePositions[index+1], Random.value);
         }
 
-        room.AddObject(new DissolveBubble(originPoint, scale));
+        room.AddObject(new DissolveBubble(originPoint, scale, color));
     }
 
     private void UpdateParticleCurve()
