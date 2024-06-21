@@ -141,8 +141,7 @@ class DespawnAnimation : UpdatableAndDeletable
             {
                 creature.AllGraspsLetGoOfThisObject(true);
                 creature.LoseAllGrasps();
-                creature.abstractCreature.LoseAllStuckObjects();
-                creature.room.RemoveObject(creature);
+                creature.Destroy();
                 phase++;
             }
         }

@@ -93,6 +93,7 @@ namespace WavesMod
             };
 
             spriteLeaserMod.InitHooks();
+            WavesGameSession.InitHooks();
         }
 
         private void InitDevConsole()

@@ -308,4 +308,74 @@ class WavesGameSession : ArenaGameSession
             }
         }
     }
+
+    /// <summary>
+    /// Initialize hooks for creature behavior during
+    /// a Waves game session
+    /// </summary>
+    public static void InitHooks()
+    {
+        On.Fly.Update += (On.Fly.orig_Update orig, Fly self, bool eu) =>
+        {
+            orig(self, eu);
+            if (self.room is null) return;
+
+            var game = self.room.game;
+
+            if (game.session is not WavesGameSession)
+                return;
+            
+            Player player = null;
+            Creature.Grasp grasp = null;
+
+            foreach (var g in self.grabbedBy)
+            {
+                if (g.grabber is Player p)
+                {
+                    player = p;
+                    grasp = g;
+                    break;
+                }
+            }
+            
+            if (player is null || grasp is null) return;
+
+            Debug.Log("fly was grabbed");
+
+            // replace the grasp with a spear grasp
+            var spear = new AbstractSpear(game.world, null, self.abstractCreature.pos, game.GetNewID(), false);
+            spear.RealizeInRoom();
+            self.room.PlaySound(SoundID.Fly_Caught, self.bodyChunks[0].pos);
+
+            grasp.Release();
+
+            if (player.CanIPickThisUp(spear.realizedObject))
+            {
+                // if hands are full...
+                if (
+                    (player.grasps[0] != null && player.grasps[1] != null) ||    
+                    (player.grasps[0] != null && player.Grabability(spear.realizedObject) >= Player.ObjectGrabability.BigOneHand) ||
+                    (player.grasps[1] != null && player.Grabability(spear.realizedObject) >= Player.ObjectGrabability.BigOneHand)
+                )
+                {
+                    if (player.CanPutSpearToBack && !player.spearOnBack.HasASpear)
+                    {
+                        self.room.PlaySound(SoundID.Slugcat_Switch_Hands_Init, player.mainBodyChunk);
+                        player.spearOnBack.SpearToBack(spear.realizedObject as Spear);
+                    }
+                }
+                else
+                {
+                    player.SlugcatGrab(spear.realizedObject, player.FreeHand());
+                }
+            }
+
+            for (int i = 0; i < 8; i++)
+            {
+                self.room.AddObject(new FlyTransformParticle(self.mainBodyChunk.pos));
+            }
+
+            self.Destroy();
+        };
+    }
 }
