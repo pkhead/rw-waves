@@ -64,7 +64,7 @@ namespace WavesMod
 
         private void InitHooks()
         {
-            IL.RainWorldGame.ctor += (il) =>
+            /*IL.RainWorldGame.ctor += (il) =>
             {
                 try
                 {
@@ -88,10 +88,11 @@ namespace WavesMod
                 {
                     logger.LogError("Could not inject IL.RainWorldGame.ctor: " + e.ToString());
                 }
-            };
+            };*/
 
             SpriteTinter.InitHooks();
             WavesGameSession.InitHooks();
+            MenuHooks.InitHooks();
         }
 
         private void InitDevConsole()
