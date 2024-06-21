@@ -1,0 +1,4 @@
+- menu
+- make player and enemies unable to shelter
+- have multiple enemies be able to come out of the same spawn den one at a time
+- figure out how to do the lives system

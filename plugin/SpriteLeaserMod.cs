@@ -118,7 +118,7 @@ class SpriteLeaserMod
                     {
                         for (int j = 0; j < 3; j++)
                         {
-                            ref var color = ref colors[(offset + i) * 3 + j];
+                            ref var color = ref colors[offset + i * 3 + j];
                             color.r = color.r * (1f - alpha) + targetColor.r * alpha;
                             color.g = color.g * (1f - alpha) + targetColor.g * alpha;
                             color.b = color.b * (1f - alpha) + targetColor.b * alpha;
