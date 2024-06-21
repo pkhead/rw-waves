@@ -172,12 +172,18 @@ class WavesGameSession : ArenaGameSession
         SpawnPlayers(room, null);
         base.Initiate();
         AddHUD();
+        AnnounceWave();
     }
 
     public override void SpawnCreatures()
     {
         base.SpawnCreatures();
         NewWave();
+    }
+
+    private void AnnounceWave()
+    {
+        game.cameras[0].hud?.textPrompt?.AddMessage("Wave " + (wave+1), 0, 240, false, false);
     }
 
     private void NewWave()
@@ -187,7 +193,6 @@ class WavesGameSession : ArenaGameSession
         Debug.Log("Spawn wave " + wave);
 
         var abstractRoom = game.world.GetAbstractRoom(0);
-        abstractRoom.realizedRoom?.PlaySound(SoundID.UI_Multiplayer_Game_Start, 0f, 1f, 1f);
 
         // get nodes that are dens
         var availableDens = new List<int>();
@@ -261,7 +266,10 @@ class WavesGameSession : ArenaGameSession
         if (nextWaveTimer > 0)
         {
             if (--nextWaveTimer == 0)
+            {
                 NewWave();
+                AnnounceWave();
+            }
         }
         else
         {
