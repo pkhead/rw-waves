@@ -18,6 +18,10 @@ class WavesGameSession : ArenaGameSession
     {
         rainCycleTimeInMinutes = 0;
         trackedCreatures = new();
+        
+        arenaSitting.gameTypeSetup.levelItems = true;
+        arenaSitting.gameTypeSetup.spearHitScore = 1;
+        arenaSitting.gameTypeSetup.rainWhenOnePlayerLeft = false;
 
         // TODO: modify this.arenaSitting instead of doing this
         if (noRain is null)
@@ -25,6 +29,8 @@ class WavesGameSession : ArenaGameSession
 
         if (respawnFlies is null)
             AddBehavior(new RespawnFlies(this));
+        
+        AddBehavior(new StartBump(this));
     }
 
     public override void Initiate()
@@ -158,7 +164,7 @@ class WavesGameSession : ArenaGameSession
 
             if (noCreaturesRemaining)
             {
-                nextWaveTimer = 80;
+                nextWaveTimer = 120;
             }
         }
     }

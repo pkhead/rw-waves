@@ -52,7 +52,7 @@ class DespawnAnimation : UpdatableAndDeletable
             var animationProgress = time / 400f;
             SpawnBubble(animationProgress * 2.5f, dissolveColor);
 
-            if (creature.graphicsModule is LizardGraphics lizardGfx)
+            if (creature.graphicsModule is LizardGraphics lizardGfx && lizardGfx.lightSource is not null)
             {
                 lizardGfx.lightSource.setAlpha *= 1f - animationProgress;
             }
