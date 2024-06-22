@@ -115,11 +115,9 @@ static class MenuHooks
                 {
                     if (self.currentGameType != ArenaGameTypeID.Waves) return;
 
-                    //WavesMod.Instance.logger.LogInfo("build waves page");
-
-                    // the label doesn't remove itself...
-                    // is also in the wrong position (too low)
-                    //self.pages[0].subObjects.Add(new MenuLabel(self, self.pages[0], "waves", new Vector2(340f, 500f), new Vector2(50f, 50f), true));
+                    self.scene.AddIllustration(new MenuIllustration(self, self.scene, "", "wavesshadow", new Vector2(-2.99f, 265.01f), true, false));
+                    self.scene.AddIllustration(new MenuIllustration(self, self.scene, "", "wavestitle", new Vector2(-2.99f, 265.01f), true, false));
+                    self.scene.flatIllustrations[self.scene.flatIllustrations.Count - 1].sprite.shader = self.manager.rainWorld.Shaders["MenuText"];
                 });
 
                 WavesMod.Instance.logger.LogInfo(il);
