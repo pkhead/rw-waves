@@ -161,7 +161,10 @@ static class ArenaSittingHooks
 
                 var pos = new Vector2(self.topMiddle.x, self.headingLabel.pos.y + 20f);
 
-                var timeStr = "~ 00:00";
+                var timeInSecs = extraData.totalTime / 40;
+                var timeInMins = timeInSecs / 60;
+
+                var timeStr = $"~ {timeInMins.ToString(CultureInfo.InvariantCulture).PadLeft(2, '0')}:{(timeInSecs%60).ToString(CultureInfo.InvariantCulture).PadLeft(2, '0')}";
                 var timeSymbol = new Menu.PlayerResultBox.SymbolAndLabel(
                     menu: self,
                     owner: self.pages[0],
