@@ -3,11 +3,13 @@ using MonoMod.Cil;
 using Mono.Cecil.Cil;
 using Menu;
 using UnityEngine;
+using System.Text.RegularExpressions;
 
 namespace WavesMod;
 
 static class MenuHooks
 {
+    private const string WavesModeInfoString = "Conquer waves of opponents that get more difficult as you<LINE>progress. See how long you can last!";
     public static void InitHooks()
     {
         ArenaGameTypeID.RegisterValues();
@@ -119,8 +121,6 @@ static class MenuHooks
                     self.scene.AddIllustration(new MenuIllustration(self, self.scene, "", "wavestitle", new Vector2(-2.99f, 265.01f), true, false));
                     self.scene.flatIllustrations[self.scene.flatIllustrations.Count - 1].sprite.shader = self.manager.rainWorld.Shaders["MenuText"];
                 });
-
-                WavesMod.Instance.logger.LogInfo(il);
             }
             catch (Exception e)
             {
@@ -239,6 +239,50 @@ static class MenuHooks
                 self.divSprite.color = Menu.Menu.MenuRGB(Menu.Menu.MenuColors.VeryDarkGrey);
                 self.divSpritePos = vector + new Vector2(0f, 197f);
                 return;
+            }
+        };
+
+        IL.Menu.InfoWindow.ctor += (il) =>
+        {
+            try
+            {
+                var cursor = new ILCursor(il);
+                var label = cursor.DefineLabel();
+
+                // want to write some code before:
+                //  string[] array = Regex.Split(text, "\r\n");
+                cursor.GotoNext(
+                    MoveType.AfterLabel,
+                    x => x.MatchLdloc(0),
+                    x => x.MatchLdstr("\r\n"), // what the hell... this isn't even from a file.
+                    x => x.MatchCall(typeof(Regex).GetMethod("Split", new Type[] { typeof(string), typeof(string) })),
+                    x => x.MatchStloc(1)
+                );
+
+                /*if ((menu as MultiplayerMenu).GetGameTypeSetup.gameType == ArenaGameTypeID.Waves)
+                    text = Regex.Replace(WavesModeInfoString, "<LINE>", "\r\n");*/
+                cursor.Emit(OpCodes.Ldarg_1); // menu variable
+                cursor.Emit(OpCodes.Isinst, typeof(MultiplayerMenu));
+                cursor.Emit(OpCodes.Callvirt, typeof(MultiplayerMenu).GetMethod("get_GetGameTypeSetup"));
+                cursor.Emit(OpCodes.Ldfld, typeof(ArenaSetup.GameTypeSetup).GetField("gameType"));
+                cursor.Emit(OpCodes.Ldsfld, typeof(ArenaGameTypeID).GetField("Waves", staticBindingFlags));
+                cursor.Emit(OpCodes.Call, gameTypeExtEnum_opEquality);
+                cursor.Emit(OpCodes.Brfalse_S, label);
+                
+                cursor.Emit(OpCodes.Ldstr, WavesModeInfoString);
+                cursor.Emit(OpCodes.Ldstr, "<LINE>");
+                cursor.Emit(OpCodes.Ldstr, "\r\n");
+                cursor.Emit(OpCodes.Call, typeof(System.Text.RegularExpressions.Regex).GetMethod("Replace", new Type[] { typeof(string), typeof(string), typeof(string) }));
+                cursor.Emit(OpCodes.Stloc_0);
+
+                //cursor.MoveAfterLabels();
+                cursor.MarkLabel(label);
+
+                WavesMod.Instance.logger.LogInfo(il);
+            }
+            catch (Exception e)
+            {
+                WavesMod.Instance.logger.LogError("IL.Menu.InfoWindow failed! " + e);
             }
         };
 
