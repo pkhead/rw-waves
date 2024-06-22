@@ -1,1 +1,16 @@
 - better menu, also maybe spawn customizability?
+
+- Multiplayer respawn options
+    - Easy: All players respawn at the start of every round
+    - Normal: Players only respawn if their body had been recovered
+    - Hard: Players do not respawn
+
+- Rework lives system?
+    - Option: The multiplayer respawn option instead decides when they lose their life
+    - Or should i keep the whole "attempts" system?
+
+- Maybe Think about adding upgrades over time (idk how that would work tho...)
+
+- BUG: Crouched down, stabbing a lizard, you grab a batfly, causes a crash
+- BUG: I think when a lizard is in their den and is full they stay there forever but doesn't trigger the next wave
+- BUG: Sometimes creatures will only come out of one den (idk why)

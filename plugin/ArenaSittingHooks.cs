@@ -201,7 +201,7 @@ static class ArenaSittingHooks
 
             if (resultPage.ArenaSitting.gameTypeSetup.gameType == ArenaGameTypeID.Waves)
             {
-                // just hide them lol
+                // just move them offscreen lol
                 self.winsSymbol.pos.x = -10000f;
                 self.deathsSymbol.pos.x = -10000f;
                 self.scoreSymbol.pos.x = -10000f;
