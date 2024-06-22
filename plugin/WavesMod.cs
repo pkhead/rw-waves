@@ -67,6 +67,7 @@ namespace WavesMod
             SpriteTinter.InitHooks();
             WavesGameSession.InitHooks();
             MenuHooks.InitHooks();
+            ArenaSittingHooks.InitHooks();
         }
 
         private void InitDevConsole()
@@ -91,10 +92,15 @@ namespace WavesMod
                         throw new ArgumentException("Expected int for argument 1", nameof(args));
                     }
 
+                    if (waveNumber <= 0)
+                    {
+                        throw new ArgumentException("Argument 1 is out of range", nameof(args));
+                    }
+
                     if (game.session is WavesGameSession session)
                     {
                         session.KillAll();
-                        session.wave = waveNumber - 1; // subtract 1, as killing all creatures will trigger the next wave
+                        session.wave = waveNumber; // no need to subtract 1, as killing all creatures will trigger the next wave
                     }
                 })
                 .Register();

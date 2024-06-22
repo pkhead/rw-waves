@@ -25,9 +25,14 @@ class WavesGameSession : ArenaGameSession
         arenaSitting.gameTypeSetup.rainWhenOnePlayerLeft = false;
 
         // i think this will make award one point for killing any type of creature?
-        for (int i = 0; i < arenaSitting.gameTypeSetup.killScores.Length; i++)
+        /*for (int i = 0; i < arenaSitting.gameTypeSetup.killScores.Length; i++)
         {
             arenaSitting.gameTypeSetup.killScores[i] = 1;
+        }*/
+
+        if (ArenaSittingHooks.TryGetData(arenaSitting, out var extras))
+        {
+            wave = extras.currentWave - 1;
         }
 
         if (noRain is null)
