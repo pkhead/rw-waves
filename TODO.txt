@@ -1,2 +1,3 @@
 - better menu, also maybe spawn customizability?
+- able to configure attempt number in menu
 - don't track creatures that decided to go to a den (altho this case should be minimized)
