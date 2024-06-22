@@ -4,11 +4,30 @@ using Mono.Cecil.Cil;
 using Menu;
 using UnityEngine;
 using System.Text.RegularExpressions;
+using System.Runtime.CompilerServices;
 
 namespace WavesMod;
 
 static class MenuHooks
 {
+    class GameTypeSetupExtras
+    {
+        public int attemptCount = 3;
+
+        public GameTypeSetupExtras()
+        {}
+    }
+
+    private static readonly ConditionalWeakTable<ArenaSetup.GameTypeSetup, GameTypeSetupExtras> gameTypeSetupCwt = new();
+
+    public static int GetAttemptCount(ArenaSetup.GameTypeSetup setup)
+    {
+        if (gameTypeSetupCwt.TryGetValue(setup, out var extras))
+            return extras.attemptCount;
+
+        return 3;
+    }
+
     private const string WavesModeInfoString = "Conquer waves of opponents that get more difficult as you<LINE>progress. See how long you can last!";
     public static void InitHooks()
     {
@@ -214,6 +233,31 @@ static class MenuHooks
             }
         };
 
+        string[] numberToString = new string[] { "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven" };
+
+        On.Menu.MultiplayerMenu.UpdateInfoText += (
+            On.Menu.MultiplayerMenu.orig_UpdateInfoText orig, MultiplayerMenu self
+        ) =>
+        {
+            if (self.selectedObject is MultipleChoiceArray.MultipleChoiceButton btn)
+            {
+                string text = (self.selectedObject.owner as MultipleChoiceArray).IDString;
+                if (text == "ATTEMPTS")
+                {
+                    if (btn.index == 0)
+                    {
+                        return "One attempt before game over";
+                    }
+                    else
+                    {
+                        return numberToString[btn.index + 1] + " attempts before game over";
+                    }
+                }
+            }
+
+            return orig(self);
+        };
+
         On.Menu.ArenaSettingsInterface.ctor += (
             On.Menu.ArenaSettingsInterface.orig_ctor orig, Menu.ArenaSettingsInterface self,
             Menu.Menu menu, MenuObject owner
@@ -238,7 +282,59 @@ static class MenuHooks
                 self.Container.AddChild(self.divSprite);
                 self.divSprite.color = Menu.Menu.MenuRGB(Menu.Menu.MenuColors.VeryDarkGrey);
                 self.divSpritePos = vector + new Vector2(0f, 197f);
+
+                // attempt #
+                // holy crap there are so many parameters
+                MultipleChoiceArray multipleChoiceArray = new MultipleChoiceArray(
+                    menu: menu,
+                    owner: self,
+                    reportTo: self,
+                    pos: vector + new Vector2(0f, 150f),
+                    text: "Attempts",
+                    IDString: "ATTEMPTS",
+                    textWidth: InGameTranslator.LanguageID.UsesLargeFont(menu.CurrLang) ? 140f : 120f,
+                    width: num,
+                    buttonsCount: 5,
+                    textInBoxes: false,
+                    splitText: false
+                );
+				self.subObjects.Add(multipleChoiceArray);
+				/*for (int i = 0; i < multipleChoiceArray.buttons.Length; i++)
+				{
+					multipleChoiceArray.buttons[i].label.text = (i + 1).ToString() + "x";
+				}*/
+
                 return;
+            }
+        };
+
+        On.Menu.ArenaSettingsInterface.GetSelected += (
+            On.Menu.ArenaSettingsInterface.orig_GetSelected orig, ArenaSettingsInterface self,
+            MultipleChoiceArray array
+        ) =>
+        {
+            if (array.IDString == "ATTEMPTS")
+            {
+                return gameTypeSetupCwt.GetOrCreateValue(self.GetGameTypeSetup).attemptCount - 1;
+            }
+            else
+            {
+                return orig(self, array);
+            }
+        };
+
+        On.Menu.ArenaSettingsInterface.SetSelected += (
+            On.Menu.ArenaSettingsInterface.orig_SetSelected orig, ArenaSettingsInterface self,
+            MultipleChoiceArray array, int i
+        ) =>
+        {
+            if (array.IDString == "ATTEMPTS")
+            {
+                gameTypeSetupCwt.GetOrCreateValue(self.GetGameTypeSetup).attemptCount = i+1;
+            }
+            else
+            {
+                orig(self, array, i);
             }
         };
 
@@ -299,6 +395,12 @@ static class MenuHooks
                 self.levelItems = true;
                 self.fliesSpawn = true;
                 self.saveCreatures = false;
+
+                gameTypeSetupCwt.GetOrCreateValue(self).attemptCount = 3;
+            }
+            else
+            {
+                gameTypeSetupCwt.Remove(self);
             }
         };
 

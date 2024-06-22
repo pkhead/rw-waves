@@ -37,7 +37,10 @@ static class ArenaSittingHooks
             
             if (gameTypeSetup.gameType == ArenaGameTypeID.Waves)
             {
-                cwt.Add(self, new ArenaSittingExtras());
+                var data = new ArenaSittingExtras();
+                cwt.Add(self, data);
+
+                data.maxAttempts = MenuHooks.GetAttemptCount(gameTypeSetup);
             }
         };
 
