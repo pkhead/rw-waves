@@ -275,10 +275,7 @@ static class MenuHooks
                 cursor.Emit(OpCodes.Call, typeof(System.Text.RegularExpressions.Regex).GetMethod("Replace", new Type[] { typeof(string), typeof(string), typeof(string) }));
                 cursor.Emit(OpCodes.Stloc_0);
 
-                //cursor.MoveAfterLabels();
                 cursor.MarkLabel(label);
-
-                WavesMod.Instance.logger.LogInfo(il);
             }
             catch (Exception e)
             {

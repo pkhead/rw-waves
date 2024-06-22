@@ -20,10 +20,16 @@ class WavesGameSession : ArenaGameSession
         trackedCreatures = new();
         
         arenaSitting.gameTypeSetup.levelItems = true;
-        arenaSitting.gameTypeSetup.spearHitScore = 1;
+        arenaSitting.gameTypeSetup.spearHitScore = 0;
+        arenaSitting.gameTypeSetup.foodScore = 0;
         arenaSitting.gameTypeSetup.rainWhenOnePlayerLeft = false;
 
-        // TODO: modify this.arenaSitting instead of doing this
+        // i think this will make award one point for killing any type of creature?
+        for (int i = 0; i < arenaSitting.gameTypeSetup.killScores.Length; i++)
+        {
+            arenaSitting.gameTypeSetup.killScores[i] = 1;
+        }
+
         if (noRain is null)
             AddBehavior(new NoRain(this));
 
@@ -142,6 +148,7 @@ class WavesGameSession : ArenaGameSession
             {
                 NewWave();
                 AnnounceWave();
+                room.PlaySound(SoundID.UI_Multiplayer_Game_Start, 0f, 1f, 1f);
             }
         }
         else

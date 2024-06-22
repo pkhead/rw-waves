@@ -7,7 +7,7 @@ namespace WavesMod;
 class DespawnAnimation : UpdatableAndDeletable
 {
     public readonly Creature creature;
-    private int time = 0;
+    private int time = -200; // it's negative so that it will wait a bit before actually displaying particle effects
     private int phase = 0;
 
     private readonly List<Vector2> curvePositions = new();
@@ -49,22 +49,25 @@ class DespawnAnimation : UpdatableAndDeletable
         {
             time++;
 
-            var animationProgress = time / 400f;
-            SpawnBubble(animationProgress * 2.5f, dissolveColor);
-
-            if (creature.graphicsModule is LizardGraphics lizardGfx && lizardGfx.lightSource is not null)
+            if (time >= 0)
             {
-                lizardGfx.lightSource.setAlpha *= 1f - animationProgress;
-            }
+                var animationProgress = time / 400f;
+                SpawnBubble(animationProgress * 2.5f, dissolveColor);
 
-            SpriteTinter.SetColorData(creature.graphicsModule, dissolveColor, animationProgress);
+                if (creature.graphicsModule is LizardGraphics lizardGfx && lizardGfx.lightSource is not null)
+                {
+                    lizardGfx.lightSource.setAlpha *= 1f - animationProgress;
+                }
 
-            if (animationProgress >= 1f)
-            {
-                creature.AllGraspsLetGoOfThisObject(true);
-                creature.LoseAllGrasps();
-                creature.Destroy();
-                phase++;
+                SpriteTinter.SetColorData(creature.graphicsModule, dissolveColor, animationProgress);
+
+                if (animationProgress >= 1f)
+                {
+                    creature.AllGraspsLetGoOfThisObject(true);
+                    creature.LoseAllGrasps();
+                    creature.Destroy();
+                    phase++;
+                }
             }
         }
         else if (phase == 1)

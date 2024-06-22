@@ -1,3 +1,2 @@
-- menu
-- mode infobox
+- better menu, also maybe spawn customizability?
 - figure out how to do the lives system
