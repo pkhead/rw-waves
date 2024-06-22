@@ -165,7 +165,19 @@ class WavesGameSession : ArenaGameSession
 
                 if (creature.state.alive)
                 {
-                    noCreaturesRemaining = false;
+                    // if a creature wants to stay in den, stop tracking them and delete them
+                    // ideally this behavior would be minimized but IDK how to code
+                    // rather not deal with a softlock
+                    if (creature.InDen && creature.WantToStayInDenUntilEndOfCycle())
+                    {
+                        creature.Room.RemoveEntity(creature);
+                        creature.Destroy();
+                        trackedCreatures.RemoveAt(i);
+                    }
+                    else
+                    {
+                        noCreaturesRemaining = false;
+                    }
                 }
                 else if (creature.realizedCreature?.room is not null)
                 {
@@ -216,7 +228,7 @@ class WavesGameSession : ArenaGameSession
             
             return orig(self);
         };
-
+        
         // make sure creatures don't escape to their dens when injured
         // (basically, same as the mmf option, except not dependent on mmf)        
         On.LizardAI.WantToStayInDenUntilEndOfCycle += (On.LizardAI.orig_WantToStayInDenUntilEndOfCycle orig, LizardAI self) =>
@@ -239,6 +251,7 @@ class WavesGameSession : ArenaGameSession
             return orig(self);
         };
 
+        // flies turn into spears when grabbed
         On.Fly.Update += (On.Fly.orig_Update orig, Fly self, bool eu) =>
         {
             orig(self, eu);
