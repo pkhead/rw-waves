@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using ArenaBehaviors;
 using UnityEngine;
+using Mono.Cecil.Cil;
+using MonoMod.Cil;
 namespace WavesMod;
 using Random = UnityEngine.Random;
 
@@ -313,6 +315,71 @@ class WavesGameSession : ArenaGameSession
             }
 
             self.Destroy();
+        };
+
+        IL.ArenaGameSession.SpawnPlayers += (il) =>
+        {
+            try
+            {
+                var cursor = new ILCursor(il);
+
+                // Go to:
+                // for (int l = 0; l < arenaPlayerList.Count; l++)
+                //                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                // and store label here so we can jump there for a continue
+                // as well as the label back to the start of the loop so we
+                // can inject logic there.
+                var forLoopContinue = cursor.DefineLabel();
+                ILLabel forLoopStart = null;
+                cursor.GotoNext(
+                    // for (int l = 0; l < arenaPlayerList.Count; l++)
+                    //                                            ^^^
+                    x => x.MatchLdloc(8),
+                    x => x.MatchLdcI4(1),
+                    x => x.MatchAdd(),
+                    x => x.MatchStloc(8),
+                    
+                    // for (int l = 0; l < arenaPlayerList.Count; l++)
+                    //                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+                    x => x.MatchLdloc(8),
+                    x => x.MatchLdloc(0),
+                    x => x.MatchCallvirt(typeof(List<ArenaSitting.ArenaPlayer>).GetMethod("get_Count")),
+                    x => x.MatchBlt(out forLoopStart)
+                );
+                cursor.MarkLabel(forLoopContinue);
+
+                // go to the start of the loop
+                // and make it so that if the injected logic determines that the player should not spawn,
+                // "continue" the for loop to the next index
+                cursor.GotoLabel(forLoopStart, MoveType.AfterLabel, false);
+                cursor.Emit(OpCodes.Ldarg_0);
+                cursor.Emit(OpCodes.Ldloc, 8);
+                cursor.Emit(OpCodes.Ldloc, 0);
+                cursor.EmitDelegate((ArenaGameSession self, int playerIndex, List<ArenaSitting.ArenaPlayer> playerList) =>
+                {
+                    if (self.game.session is not WavesGameSession)
+                        return false;
+
+                    // if the given player has at least one life, consume it to spawn the player
+                    if (ArenaSittingHooks.TryGetData(self.arenaSitting, out var data))
+                    {
+                        var playerNumber = playerList[playerIndex].playerNumber;
+                        Debug.Log($"Spawn player {playerNumber}: Has {data.playerLives[playerNumber]} lives");
+                        if (data.playerLives[playerNumber] >= 1)
+                        {
+                            data.playerLives[playerNumber]--;
+                            return true;
+                        }
+                    }
+
+                    return false;
+                });
+                cursor.Emit(OpCodes.Brfalse, forLoopContinue);
+            }
+            catch (Exception e)
+            {
+                WavesMod.Instance.logger.LogError("IL.ArenaGameSession.SpawnPlayers failed! " + e);
+            }
         };
     }
 }

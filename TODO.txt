@@ -1,5 +1,7 @@
 - better menu
 - better info string
+- is it compatible with Myriad?
+  i have commented places of the code where i use a hard-coded max player count. ctrl+shift+f "myriad".
 
 - Respawn Wait: Controls how many waves a player has to wait until respawning.
                 Last value makes it so players only respawn once everyone is dead.

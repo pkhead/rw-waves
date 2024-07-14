@@ -23,7 +23,7 @@ enum WavesDifficultyOption
 
 static class MenuHooks
 {
-    class GameTypeSetupExtras
+    public class GameTypeSetupExtras
     {
         public int wavesLives = 3;
         public WavesDifficultyOption wavesDifficulty = WavesDifficultyOption.Hard;
@@ -44,11 +44,9 @@ static class MenuHooks
     private static readonly ConditionalWeakTable<ArenaSetup.GameTypeSetup, GameTypeSetupExtras> gameTypeSetupCwt = new();
     private static readonly ConditionalWeakTable<ArenaSettingsInterface, ArenaSettingsInterfaceExtras> arenaSettingsInterfaceCwt = new();
 
-    public static int GetStartingLives(ArenaSetup.GameTypeSetup setup)
+    public static GameTypeSetupExtras GetExtraSetupOptions(ArenaSetup.GameTypeSetup setup)
     {
-        if (gameTypeSetupCwt.TryGetValue(setup, out var extras))
-            return extras.wavesLives;
-        return new GameTypeSetupExtras().wavesLives;
+        return gameTypeSetupCwt.GetOrCreateValue(setup);
     }
 
     private const string WavesModeInfoString = "Conquer waves of opponents that get more difficult as you<LINE>progress. See how long you can last!";

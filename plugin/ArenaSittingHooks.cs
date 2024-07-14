@@ -14,11 +14,12 @@ static class ArenaSittingHooks
     public class ArenaSittingExtras
     {
         public int currentWave = 0;
-
-        public int currentAttempt = 0;
-        public int maxAttempts = 2;
-
         public int totalTime = 0;
+        public List<int> playerLives; // a life value of 0 means the player is on their last life. if dead, they will not respawn.
+
+        public int startingLives = 3;
+        public WavesDifficultyOption difficulty = WavesDifficultyOption.Hard;
+        public int respawnWait = 0;
 
         public ArenaSittingExtras()
         {}
@@ -40,7 +41,43 @@ static class ArenaSittingHooks
                 var data = new ArenaSittingExtras();
                 cwt.Add(self, data);
 
-                data.maxAttempts = MenuHooks.GetStartingLives(gameTypeSetup);
+                var setupData = MenuHooks.GetExtraSetupOptions(gameTypeSetup);
+                data.startingLives = setupData.wavesLives;
+                data.difficulty = setupData.wavesDifficulty;
+                data.respawnWait = setupData.wavesRespawnWait;
+                data.playerLives = new();
+            }
+        };
+
+        On.ArenaSitting.AddPlayer += (
+            On.ArenaSitting.orig_AddPlayer orig, ArenaSitting self,
+            int playerNumber
+        ) =>
+        {
+            orig(self, playerNumber);
+
+            if (self.gameTypeSetup.gameType == ArenaGameTypeID.Waves)
+            {
+                var data = cwt.GetOrCreateValue(self);
+                while (data.playerLives.Count <= playerNumber) data.playerLives.Add(0);
+                data.playerLives[playerNumber] = data.startingLives;
+            }
+        };
+
+        On.ArenaSitting.AddPlayerWithClass += (
+            On.ArenaSitting.orig_AddPlayerWithClass orig, ArenaSitting self,
+            int playerNumber, SlugcatStats.Name playerClass
+        ) =>
+        {
+            orig(self, playerNumber, playerClass);
+
+            if (self.gameTypeSetup.gameType == ArenaGameTypeID.Waves)
+            {
+                var data = cwt.GetOrCreateValue(self);
+                while (data.playerLives.Count <= playerNumber) data.playerLives.Add(0);
+                data.playerLives[playerNumber] = data.startingLives;
+
+                WavesMod.Instance.logger.LogInfo($"Player {playerNumber} lives: {data.startingLives}");
             }
         };
 
@@ -81,10 +118,20 @@ static class ArenaSittingHooks
                         if (manager.currentMainLoop is RainWorldGame rwGame && rwGame.GetArenaGameSession is WavesGameSession wavesSession)
                         {
                             extras.currentWave = wavesSession.wave;
-                            extras.currentAttempt++;
 
-                            // ran out of attempts
-                            if (extras.currentAttempt >= extras.maxAttempts)
+                            // check if any players have any lives left
+                            // if not, game over man...
+                            bool canContinue = false;
+                            for (int i = 0; i < extras.playerLives.Count; i++)
+                            {
+                                if (extras.playerLives[i] > 0)
+                                {
+                                    canContinue = true;
+                                    break;
+                                }
+                            }
+
+                            if (!canContinue)
                             {
                                 manager.RequestMainProcessSwitch(ProcessManager.ProcessID.MultiplayerResults);
                                 return true;
@@ -106,6 +153,7 @@ static class ArenaSittingHooks
 
         // keep track of total time
         // also make sure nobody really "wins"
+        // by setting player.winner = false for every player
         On.ArenaSitting.SessionEnded += (
             On.ArenaSitting.orig_SessionEnded orig, ArenaSitting self,
             ArenaGameSession session
@@ -130,7 +178,7 @@ static class ArenaSittingHooks
         };
 
         // for the round results screen, replace the header text
-        // to show "ATTEMPT # - WAVE #" instead of "ROUND # - etc"
+        // to show "WAVE #" instead of "ROUND # - etc"
         On.Menu.ArenaOverlay.ctor += (
             On.Menu.ArenaOverlay.orig_ctor orig, Menu.ArenaOverlay self,
             ProcessManager manager, ArenaSitting ArenaSitting, List<ArenaSitting.ArenaPlayer> result
@@ -141,7 +189,20 @@ static class ArenaSittingHooks
             if (ArenaSitting.gameTypeSetup.gameType == ArenaGameTypeID.Waves && cwt.TryGetValue(ArenaSitting, out var extras))
             {
                 var wavesSession = (manager.currentMainLoop as RainWorldGame).GetArenaGameSession as WavesGameSession;
-                self.headingLabel.text = string.Concat("ATTEMPT ", extras.currentAttempt+1, " - WAVE ", wavesSession.wave+1);
+
+                bool canContinue = false;
+                for (int i = 0; i < extras.playerLives.Count; i++)
+                {
+                    if (extras.playerLives[i] > 0)
+                    {
+                        canContinue = true;
+                        break;
+                    }
+                }
+
+                self.headingLabel.text = 
+                    canContinue ? string.Concat("WAVE ", wavesSession.wave+1)
+                                : string.Concat("WAVE ", wavesSession.wave+1, " - GAME OVER");
             }
         };
 
