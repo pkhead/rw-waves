@@ -1,13 +1,12 @@
-- better menu, also maybe spawn customizability?
+- better menu
+- better info string
 
-- Multiplayer respawn options
-    - Easy: All players respawn at the start of every round
-    - Normal: Players only respawn if their body had been recovered
-    - Hard: Players do not respawn
+- Respawn Wait: Controls how many waves a player has to wait until respawning.
+                Last value makes it so players only respawn once everyone is dead.
 
-- Rework lives system?
-    - Option: The multiplayer respawn option instead decides when they lose their life
-    - Or should i keep the whole "attempts" system?
+- Respawn Options:
+    - Normal: When dead, players don't lose a life if their body hadn't been eaten. Respawn on next wave.
+    - Hard: When dead, players always lose a life. Respawn on next wave.
 
 - Maybe Think about adding upgrades over time (idk how that would work tho...)
 

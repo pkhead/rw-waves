@@ -52,7 +52,7 @@ namespace WavesMod
                     }
                     catch (System.IO.FileNotFoundException)
                     {
-                        logger.LogError("Dev console not found!");
+                        logger.LogInfo("Dev console not found");
                     }
                 }
                 catch (Exception e)

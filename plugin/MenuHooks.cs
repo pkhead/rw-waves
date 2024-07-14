@@ -8,24 +8,47 @@ using System.Runtime.CompilerServices;
 
 namespace WavesMod;
 
+enum WavesDifficultyOption
+{
+    /// <summary>
+    /// Players don't lose a life if their body hadn't been eaten.
+    /// </summary>
+    Normal = 0,
+
+    /// <summary>
+    /// Players always lose a life when they die.
+    /// </summary>
+    Hard = 1,
+}
+
 static class MenuHooks
 {
     class GameTypeSetupExtras
     {
-        public int attemptCount = 3;
+        public int wavesLives = 3;
+        public WavesDifficultyOption wavesDifficulty = WavesDifficultyOption.Hard;
+        public int wavesRespawnWait = 0;
 
         public GameTypeSetupExtras()
         {}
     }
 
-    private static readonly ConditionalWeakTable<ArenaSetup.GameTypeSetup, GameTypeSetupExtras> gameTypeSetupCwt = new();
+    class ArenaSettingsInterfaceExtras
+    {
+        public SelectOneButton[] respawnModes;
 
-    public static int GetAttemptCount(ArenaSetup.GameTypeSetup setup)
+        public ArenaSettingsInterfaceExtras()
+        {}
+    }
+
+    private static readonly ConditionalWeakTable<ArenaSetup.GameTypeSetup, GameTypeSetupExtras> gameTypeSetupCwt = new();
+    private static readonly ConditionalWeakTable<ArenaSettingsInterface, ArenaSettingsInterfaceExtras> arenaSettingsInterfaceCwt = new();
+
+    public static int GetStartingLives(ArenaSetup.GameTypeSetup setup)
     {
         if (gameTypeSetupCwt.TryGetValue(setup, out var extras))
-            return extras.attemptCount;
-
-        return 3;
+            return extras.wavesLives;
+        return new GameTypeSetupExtras().wavesLives;
     }
 
     private const string WavesModeInfoString = "Conquer waves of opponents that get more difficult as you<LINE>progress. See how long you can last!";
@@ -134,6 +157,7 @@ static class MenuHooks
                 cursor.Emit(OpCodes.Ldarg_0);
                 cursor.EmitDelegate((MultiplayerMenu self) =>
                 {
+                    // add waves mode title
                     if (self.currentGameType != ArenaGameTypeID.Waves) return;
 
                     self.scene.AddIllustration(new MenuIllustration(self, self.scene, "", "wavesshadow", new Vector2(-2.99f, 265.01f), true, false));
@@ -233,7 +257,7 @@ static class MenuHooks
             }
         };
 
-        string[] numberToString = new string[] { "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven" };
+        string[] numberToString = new string[] { "zero", "one", "two", "three", "four", "five", "six", "seven" };
 
         On.Menu.MultiplayerMenu.UpdateInfoText += (
             On.Menu.MultiplayerMenu.orig_UpdateInfoText orig, MultiplayerMenu self
@@ -242,16 +266,38 @@ static class MenuHooks
             if (self.selectedObject is MultipleChoiceArray.MultipleChoiceButton btn)
             {
                 string text = (self.selectedObject.owner as MultipleChoiceArray).IDString;
-                if (text == "ATTEMPTS")
+                if (text == "LIVES")
                 {
                     if (btn.index == 0)
                     {
-                        return "One attempt before game over";
+                        return "Each player starts with one life";
                     }
                     else
                     {
-                        return numberToString[btn.index + 1] + " attempts before game over";
+                        return $"Each player starts with {numberToString[btn.index + 1]} lives";
                     }
+                }
+                else if (text == "RESPAWNWAIT")
+                {
+                    if (btn.index == 5)
+                    {
+                        return "Players must wait until everyone is dead before respawning";
+                    }
+                    else
+                    {
+                        return $"Players must wait {numberToString[btn.index + 1]} {(btn.index > 0 ? "waves":"wave")} before respawning";
+                    }
+                }
+            }
+            else if (self.selectedObject is SelectOneButton selectOneButton && selectOneButton.signalText == "RESPAWNMODE")
+            {
+                if (selectOneButton.buttonArrayIndex == 0) // normal mode
+                {
+                    return "Players don't lose a life if their body was saved";
+                }
+                else if (selectOneButton.buttonArrayIndex == 1) // hard mod
+                {
+                    return "Players always lose a life upon death";
                 }
             }
 
@@ -283,26 +329,83 @@ static class MenuHooks
                 self.divSprite.color = Menu.Menu.MenuRGB(Menu.Menu.MenuColors.VeryDarkGrey);
                 self.divSpritePos = vector + new Vector2(0f, 197f);
 
-                // attempt #
+                // life count
                 // holy crap there are so many parameters
-                MultipleChoiceArray multipleChoiceArray = new MultipleChoiceArray(
+                var choiceArrayTextWidth = InGameTranslator.LanguageID.UsesLargeFont(menu.CurrLang) ? 140f : 120f;
+                MultipleChoiceArray livesChoiceArray = new MultipleChoiceArray(
                     menu: menu,
                     owner: self,
                     reportTo: self,
                     pos: vector + new Vector2(0f, 150f),
-                    text: "Attempts",
-                    IDString: "ATTEMPTS",
-                    textWidth: InGameTranslator.LanguageID.UsesLargeFont(menu.CurrLang) ? 140f : 120f,
+                    text: "Lives:",
+                    IDString: "LIVES",
+                    textWidth: choiceArrayTextWidth,
                     width: num,
-                    buttonsCount: 5,
+                    buttonsCount: 6,
                     textInBoxes: false,
                     splitText: false
                 );
-				self.subObjects.Add(multipleChoiceArray);
-				/*for (int i = 0; i < multipleChoiceArray.buttons.Length; i++)
-				{
-					multipleChoiceArray.buttons[i].label.text = (i + 1).ToString() + "x";
-				}*/
+				self.subObjects.Add(livesChoiceArray);
+
+                // respawn wait
+                var respawnWaitArray = new MultipleChoiceArray(
+                    menu: menu,
+                    owner: self,
+                    reportTo: self,
+                    pos: vector + new Vector2(0f, 100f),
+                    text: "Respawn Wait:",
+                    IDString: "RESPAWNWAIT",
+                    textWidth: choiceArrayTextWidth,
+                    width: num,
+                    buttonsCount: 6,
+                    textInBoxes: false,
+                    splitText: false
+                );
+                self.subObjects.Add(respawnWaitArray);
+
+                // radio buttons for respawn mode
+                // wow ui code in this game is stinky
+                var buttonWidth = num / 2f - 20f;
+                var extras = arenaSettingsInterfaceCwt.GetOrCreateValue(self);
+
+                MenuLabel respawnModeLabel;
+                self.subObjects.Add(respawnModeLabel = new MenuLabel(
+                    menu: menu,
+                    owner: owner,
+                    text: "Respawn Mode:",
+                    pos: vector + new Vector2(-choiceArrayTextWidth * 1.5f, 64f),
+                    size: new Vector2(choiceArrayTextWidth, 20f),
+                    bigText: false
+                ));
+                respawnModeLabel.label.color = Menu.Menu.MenuRGB(Menu.Menu.MenuColors.DarkGrey);
+                respawnModeLabel.label.alignment = FLabelAlignment.Left;
+                respawnModeLabel.label.anchorX = 0;
+
+                extras.respawnModes = new SelectOneButton[2];
+                extras.respawnModes[0] = new SelectOneButton(
+                    menu: menu,
+                    owner: self,
+                    displayText: "NORMAL",
+                    signalText: "RESPAWNMODE",
+                    pos: vector + new Vector2(0f, 62f),
+                    size: new Vector2(buttonWidth, 24f),
+                    buttonArray: extras.respawnModes,
+                    buttonArrayIndex: 0
+                );
+
+                extras.respawnModes[1] = new SelectOneButton(
+                    menu: menu,
+                    owner: self,
+                    displayText: "HARD",
+                    signalText: "RESPAWNMODE",
+                    pos: vector + new Vector2(num / 2f + (num / 2f - buttonWidth) / 2f, 62f),
+                    size: new Vector2(buttonWidth, 24f),
+                    buttonArray: extras.respawnModes,
+                    buttonArrayIndex: 1
+                );
+
+                self.subObjects.Add(extras.respawnModes[0]);
+                self.subObjects.Add(extras.respawnModes[1]);
 
                 return;
             }
@@ -313,9 +416,14 @@ static class MenuHooks
             MultipleChoiceArray array
         ) =>
         {
-            if (array.IDString == "ATTEMPTS")
+            if (array.IDString == "LIVES")
             {
-                return gameTypeSetupCwt.GetOrCreateValue(self.GetGameTypeSetup).attemptCount - 1;
+                return gameTypeSetupCwt.GetOrCreateValue(self.GetGameTypeSetup).wavesLives - 1;
+            }
+            else if (array.IDString == "RESPAWNWAIT")
+            {
+                var value = gameTypeSetupCwt.GetOrCreateValue(self.GetGameTypeSetup).wavesRespawnWait;
+                return value == -1 ? 5 : value;
             }
             else
             {
@@ -328,14 +436,40 @@ static class MenuHooks
             MultipleChoiceArray array, int i
         ) =>
         {
-            if (array.IDString == "ATTEMPTS")
+            if (array.IDString == "LIVES")
             {
-                gameTypeSetupCwt.GetOrCreateValue(self.GetGameTypeSetup).attemptCount = i+1;
+                gameTypeSetupCwt.GetOrCreateValue(self.GetGameTypeSetup).wavesLives = i+1;
+            }
+            else if (array.IDString == "RESPAWNWAIT")
+            {
+                gameTypeSetupCwt.GetOrCreateValue(self.GetGameTypeSetup).wavesRespawnWait
+                    = (i == 5) ? -1 : i;
             }
             else
             {
                 orig(self, array, i);
             }
+        };
+
+        On.Menu.ArenaSettingsInterface.GetCurrentlySelectedOfSeries += (
+            On.Menu.ArenaSettingsInterface.orig_GetCurrentlySelectedOfSeries orig, ArenaSettingsInterface self,
+            string series
+        ) =>
+        {
+            if (series == "RESPAWNMODE")
+                return (int)gameTypeSetupCwt.GetOrCreateValue(self.GetGameTypeSetup).wavesDifficulty;
+            return orig(self, series);
+        };
+
+        On.Menu.ArenaSettingsInterface.SetCurrentlySelectedOfSeries += (
+            On.Menu.ArenaSettingsInterface.orig_SetCurrentlySelectedOfSeries orig, ArenaSettingsInterface self,
+            string series, int to
+        ) =>
+        {
+            if (series == "RESPAWNMODE")
+                gameTypeSetupCwt.GetOrCreateValue(self.GetGameTypeSetup).wavesDifficulty = (WavesDifficultyOption)to;
+            else
+                orig(self, series, to);
         };
 
         IL.Menu.InfoWindow.ctor += (il) =>
@@ -396,7 +530,7 @@ static class MenuHooks
                 self.fliesSpawn = true;
                 self.saveCreatures = false;
 
-                gameTypeSetupCwt.GetOrCreateValue(self).attemptCount = 3;
+                gameTypeSetupCwt.GetOrCreateValue(self).wavesLives = 3;
             }
             else
             {

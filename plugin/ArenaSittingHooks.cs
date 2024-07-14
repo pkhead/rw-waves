@@ -40,7 +40,7 @@ static class ArenaSittingHooks
                 var data = new ArenaSittingExtras();
                 cwt.Add(self, data);
 
-                data.maxAttempts = MenuHooks.GetAttemptCount(gameTypeSetup);
+                data.maxAttempts = MenuHooks.GetStartingLives(gameTypeSetup);
             }
         };
 
