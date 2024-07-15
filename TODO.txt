@@ -11,17 +11,18 @@
             WAVE 1
             =================================
             [@]  (5)  [$]  (4)  [&]  (3)
-            [%]  (2)
+            [%]  (2)  <+>
 
             Random: (6)
-            [@] (1) [$] (1) [&] (2)
+            [@] (1) [$] (1) [&] (2) <+>
             =================================
             [               +               ]
 
-            (the symbols represent creature symbols)
+            (symbols except the plus sign represent creature symbols)
 
 - Maybe Think about adding upgrades over time (idk how that would work tho...)
 
+- BUG: FIGURE OUT WHY SOMETIMES CREATURES DONT SPAWN IN A WAVE SO IT CONTINUOUSLY INCREASES!!!
 - BUG: Crouched down, stabbing a lizard, you grab a batfly, causes a crash
 - BUG: I think when a lizard is in their den and is full they stay there forever but doesn't trigger the next wave
 - BUG: Sometimes creatures will only come out of one den (idk why)
