@@ -339,7 +339,7 @@ static class MenuHooks
                     IDString: "LIVES",
                     textWidth: choiceArrayTextWidth,
                     width: num,
-                    buttonsCount: 6,
+                    buttonsCount: 5,
                     textInBoxes: false,
                     splitText: false
                 );

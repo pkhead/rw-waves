@@ -103,5 +103,18 @@ static class ArenaUiHooks
                 // TODO: try to prevent kill trophy overlap with text
             }
         };
+
+        On.HUD.PlayerSpecificMultiplayerHud.ctor += (
+            On.HUD.PlayerSpecificMultiplayerHud.orig_ctor orig, HUD.PlayerSpecificMultiplayerHud self,
+            HUD.HUD hud, ArenaGameSession session, AbstractCreature abstractPlayer
+        ) =>
+        {
+            orig(self, hud, session, abstractPlayer);
+
+            if (session is WavesGameSession)
+            {
+                self.parts.Add(new HudLifeTracker(self));
+            }
+        };
     }
 }

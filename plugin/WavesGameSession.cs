@@ -61,10 +61,13 @@ class WavesGameSession : ArenaGameSession
         AddHUD();
         AnnounceWave();
 
-        playerRespawnWait = new int[Players.Count];
-        for (int i = 0; i < Players.Count; i++)
+        if (ArenaSittingHooks.TryGetData(arenaSitting, out var data))
         {
-
+            playerRespawnWait = new int[Players.Count];
+            for (int i = 0; i < Players.Count; i++)
+            {
+                playerRespawnWait[i] = data.respawnWait == -1 ? int.MaxValue : data.respawnWait;
+            }
         }
     }
 
@@ -190,7 +193,7 @@ class WavesGameSession : ArenaGameSession
 
         // respawn previously dead players
         // if player count is 0, players might not have spawned yet
-        if (Players.Count > 0)
+        if (Players.Count > 0 && ArenaSittingHooks.TryGetData(arenaSitting, out var sittingData))
         {
             for (int i = 0; i < arenaSitting.players.Count; i++)
             {
@@ -205,26 +208,29 @@ class WavesGameSession : ArenaGameSession
                 }
 
                 if (playerCreature.state.alive) continue;
+                if (playerRespawnWait[i] > 0)
+                {
+                    playerRespawnWait[i]--;
+                    continue;
+                }
                 
                 // respawn the player if they have enough lives
-                if (ArenaSittingHooks.TryGetData(arenaSitting, out var data))
+                // if on normal mode and player isn't perma-dead,
+                // they get an extra chance
+                if (sittingData.difficulty == WavesDifficultyOption.Normal && !permaDeadPlayers.Contains(playerCreature))
+                    sittingData.playerLives[playerNumber]++;
+                
+                if (sittingData.playerLives[playerNumber] >= 1)
                 {
-                    // if on normal mode and player isn't perma-dead,
-                    // they get an extra chance
-                    if (data.difficulty == WavesDifficultyOption.Normal && !permaDeadPlayers.Contains(playerCreature))
-                        data.playerLives[playerNumber]++;
-                    
-                    if (data.playerLives[playerNumber] >= 1)
-                    {
-                        data.playerLives[playerNumber]--;
+                    sittingData.playerLives[playerNumber]--;
 
-                        // do dissolve animation for old player corpse
-                        if (playerCreature.realizedCreature?.room is not null)
-                            playerCreature.realizedCreature.room.AddObject(new DespawnAnimation(playerCreature.realizedCreature));
-                        
-                        permaDeadPlayers.Remove(playerCreature);
-                        SpawnPlayer(i);
-                    }
+                    // do dissolve animation for old player corpse
+                    if (playerCreature.realizedCreature?.room is not null)
+                        playerCreature.realizedCreature.room.AddObject(new DespawnAnimation(playerCreature.realizedCreature));
+                    
+                    permaDeadPlayers.Remove(playerCreature);
+                    SpawnPlayer(i);
+                    playerRespawnWait[i] = sittingData.respawnWait;
                 }
             }
         }
@@ -322,7 +328,7 @@ class WavesGameSession : ArenaGameSession
 
         if (nextWaveTimer > 0)
         {
-            if (--nextWaveTimer == 0)
+            if (--nextWaveTimer == 0 && thisFrameActivePlayers > 0)
             {
                 NewWave();
                 AnnounceWave();

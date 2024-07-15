@@ -1,19 +1,28 @@
-- better menu
 - better info string
-- player death ring thing doesn't show up after respawn
-- show # of lives on corners
+- session persistence
 - is it compatible with Myriad?
   i have commented places of the code where i use a hard-coded max player count. ctrl+shift+f "myriad".
 
-- Respawn Wait: Controls how many waves a player has to wait until respawning.
-                Last value makes it so players only respawn once everyone is dead.
+- spawn configuration modes:
+  - Preset: the spawn list that i created. does not care whether or not the user unlocked a creature.
+  - Custom: user can customize spawns from the arena menu. can only add unlocked creatures.
+            each wave will be represented by a big ass block. below is a sample of what one would look like.
 
-- Respawn Options:
-    - Normal: When dead, players don't lose a life if their body hadn't been eaten. Respawn on next wave.
-    - Hard: When dead, players always lose a life. Respawn on next wave.
+            WAVE 1
+            =================================
+            [@]  (5)  [$]  (4)  [&]  (3)
+            [%]  (2)
+
+            Random: (6)
+            [@] (1) [$] (1) [&] (2)
+            =================================
+            [               +               ]
+
+            (the symbols represent creature symbols)
 
 - Maybe Think about adding upgrades over time (idk how that would work tho...)
 
 - BUG: Crouched down, stabbing a lizard, you grab a batfly, causes a crash
 - BUG: I think when a lizard is in their den and is full they stay there forever but doesn't trigger the next wave
 - BUG: Sometimes creatures will only come out of one den (idk why)
+- BUG: lizards don't acknowledge player corpses if they died last round
