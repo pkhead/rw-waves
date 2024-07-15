@@ -5,6 +5,7 @@ using UnityEngine;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RWCustom;
+using System.Linq;
 namespace WavesMod;
 using Random = UnityEngine.Random;
 
@@ -14,9 +15,11 @@ class WavesGameSession : ArenaGameSession
     private readonly List<AbstractCreature> trackedCreatures;
     private readonly HashSet<AbstractCreature> permaDeadPlayers;
     private WavesCreatureSpawner creatureSpawner = null;
+    private readonly List<(HUD.PlayerSpecificMultiplayerHud hud, AbstractCreature newCreature)> stalePlayerHuds = new();
 
     public int wave = -1;
     private int nextWaveTimer = -1;
+    private int[] playerRespawnWait = null;
 
     public WavesGameSession(RainWorldGame game) : base(game)
     {
@@ -57,6 +60,12 @@ class WavesGameSession : ArenaGameSession
         base.Initiate();
         AddHUD();
         AnnounceWave();
+
+        playerRespawnWait = new int[Players.Count];
+        for (int i = 0; i < Players.Count; i++)
+        {
+
+        }
     }
 
     public override void SpawnCreatures()
@@ -123,19 +132,47 @@ class WavesGameSession : ArenaGameSession
 		abstractCreature.pos.room = this.game.world.offScreenDen.index;
 		this.game.shortcuts.betweenRoomsWaitingLobby.Add(shortCutVessel);
 
+        Debug.Log($"pos: {abstractCreature.realizedCreature.mainBodyChunk.pos.x}, {abstractCreature.realizedCreature.mainBodyChunk.pos.y}");
+
         // replace old player AbstractCreature in the Players list with the new one
-        bool wasPlayerAdded = false;
+        AbstractCreature oldCreature = null;
         for (int i = 0; i < Players.Count; i++)
         {
             if (Players[i].state is PlayerState state && state.playerNumber == playerList[playerIndex].playerNumber)
             {
-                wasPlayerAdded = true;
+                oldCreature = Players[i];
                 Players[i] = abstractCreature;
                 break;
             }
         }
 
-        if (!wasPlayerAdded) AddPlayer(abstractCreature);
+        if (oldCreature is null)
+        {
+            Debug.Log("Player spawned in but was not previously in the session. How??");
+            AddPlayer(abstractCreature);
+
+            var hud = game.cameras[0].hud;
+            var playerSpecificMultiplayerHud = new HUD.PlayerSpecificMultiplayerHud(hud, this, abstractCreature);
+            hud.AddPart(playerSpecificMultiplayerHud);
+            if (ModManager.MSC)
+            {
+                hud.AddPart(new MoreSlugcats.AmmoMeter(hud, playerSpecificMultiplayerHud, hud.fContainers[1]));
+            }
+        }
+        else
+        {
+            // update hud tracker
+            foreach (var hud in game.cameras[0].hud.parts.Where(x => x is HUD.PlayerSpecificMultiplayerHud))
+            {
+                var playerSpecificHud = hud as HUD.PlayerSpecificMultiplayerHud;
+
+                if (playerSpecificHud.abstractPlayer == oldCreature)
+                {
+                    Debug.Log("Update tracked creature for HUD on the next frame");
+                    stalePlayerHuds.Add((playerSpecificHud, abstractCreature));
+                }
+            }
+        }
     }
 
     private void PlayerPermaDie(AbstractCreature player)
@@ -160,8 +197,13 @@ class WavesGameSession : ArenaGameSession
                 var playerNumber = arenaSitting.players[i].playerNumber;
 
                 // check that player isn't dead
-                var playerCreature = Players.Find(p => (p.state as PlayerState).playerNumber == playerNumber)
-                    ?? throw new NullReferenceException($"could not find creature for player with number {playerNumber}");
+                var playerCreature = Players.Find(p => (p.state as PlayerState).playerNumber == playerNumber);
+                if (playerCreature is null)
+                {
+                    Debug.Log($"could not find creature for player with number {playerNumber}");
+                    continue;
+                }
+
                 if (playerCreature.state.alive) continue;
                 
                 // respawn the player if they have enough lives
@@ -180,11 +222,11 @@ class WavesGameSession : ArenaGameSession
                         if (playerCreature.realizedCreature?.room is not null)
                             playerCreature.realizedCreature.room.AddObject(new DespawnAnimation(playerCreature.realizedCreature));
                         
+                        permaDeadPlayers.Remove(playerCreature);
                         SpawnPlayer(i);
                     }
                 }
             }
-            permaDeadPlayers.Clear();
         }
 
         var abstractRoom = game.world.GetAbstractRoom(0);
@@ -262,6 +304,21 @@ class WavesGameSession : ArenaGameSession
 
         if (creatureSpawner is not null && creatureSpawner.Update())
             creatureSpawner = null;
+        
+        // update stale player huds
+        // i don't really know exactly when the mainBodyChunk position stops being (0, 0)
+        // all i know is that i don't want the revive bump circle to be centered at that position
+        for (int i = stalePlayerHuds.Count - 1; i >= 0; i--)
+        {
+            var (hud, creature) = stalePlayerHuds[i];
+
+            var realized = creature.realizedCreature;
+            if (realized is not null && !(realized.mainBodyChunk.pos.x == 0 && realized.mainBodyChunk.pos.y == 0))
+            {
+                hud.abstractPlayer = creature;
+                stalePlayerHuds.RemoveAt(i);
+            }
+        }
 
         if (nextWaveTimer > 0)
         {
@@ -549,7 +606,9 @@ class WavesGameSession : ArenaGameSession
                             data.playerLives[playerNumber]--;
                             return true;
                         }
-
+                        
+                        // player ran out of lives, will not respawn
+                        playerList[playerIndex].alive = false;
                         return false;
                     }
 

@@ -383,7 +383,7 @@ static class MenuHooks
                 extras.respawnModes[0] = new SelectOneButton(
                     menu: menu,
                     owner: self,
-                    displayText: "NORMAL",
+                    displayText: "EASY",
                     signalText: "RESPAWNMODE",
                     pos: vector + new Vector2(0f, 62f),
                     size: new Vector2(buttonWidth, 24f),
@@ -394,7 +394,7 @@ static class MenuHooks
                 extras.respawnModes[1] = new SelectOneButton(
                     menu: menu,
                     owner: self,
-                    displayText: "HARD",
+                    displayText: "NORMAL",
                     signalText: "RESPAWNMODE",
                     pos: vector + new Vector2(num / 2f + (num / 2f - buttonWidth) / 2f, 62f),
                     size: new Vector2(buttonWidth, 24f),

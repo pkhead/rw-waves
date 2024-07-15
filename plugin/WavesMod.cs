@@ -68,6 +68,7 @@ namespace WavesMod
             WavesGameSession.InitHooks();
             MenuHooks.InitHooks();
             ArenaSittingHooks.InitHooks();
+            ArenaUiHooks.InitHooks();
         }
 
         private void InitDevConsole()
