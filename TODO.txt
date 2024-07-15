@@ -1,5 +1,7 @@
 - better menu
 - better info string
+- player death ring thing doesn't show up after respawn
+- show # of lives on corners
 - is it compatible with Myriad?
   i have commented places of the code where i use a hard-coded max player count. ctrl+shift+f "myriad".
 
