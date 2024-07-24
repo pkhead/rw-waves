@@ -19,7 +19,7 @@ class WavesGameSession : ArenaGameSession
 
     public int wave = -1;
     private int nextWaveTimer = -1;
-    private int[] playerRespawnWait = null;
+    private readonly int initialTotalTime = 0;
 
     public WavesGameSession(RainWorldGame game) : base(game)
     {
@@ -41,6 +41,7 @@ class WavesGameSession : ArenaGameSession
         if (ArenaSittingHooks.TryGetData(arenaSitting, out var extras))
         {
             wave = extras.currentWave - 1;
+            initialTotalTime = extras.totalTime;
         }
 
         if (noRain is null)
@@ -60,15 +61,6 @@ class WavesGameSession : ArenaGameSession
         base.Initiate();
         AddHUD();
         AnnounceWave();
-
-        if (ArenaSittingHooks.TryGetData(arenaSitting, out var data))
-        {
-            playerRespawnWait = new int[Players.Count];
-            for (int i = 0; i < Players.Count; i++)
-            {
-                playerRespawnWait[i] = data.respawnWait == -1 ? int.MaxValue : data.respawnWait;
-            }
-        }
     }
 
     public override void SpawnCreatures()
@@ -191,6 +183,11 @@ class WavesGameSession : ArenaGameSession
 
         Debug.Log("Spawn wave " + wave);
 
+        if (wave > 0)
+        {
+            SaveSession();
+        }
+
         // respawn previously dead players
         // if player count is 0, players might not have spawned yet
         if (Players.Count > 0 && ArenaSittingHooks.TryGetData(arenaSitting, out var sittingData))
@@ -208,9 +205,9 @@ class WavesGameSession : ArenaGameSession
                 }
 
                 if (playerCreature.state.alive) continue;
-                if (playerRespawnWait[i] > 0)
+                if (sittingData.playerRespawnWait[i] > 0)
                 {
-                    playerRespawnWait[i]--;
+                    sittingData.playerRespawnWait[i]--;
                     continue;
                 }
                 
@@ -230,7 +227,7 @@ class WavesGameSession : ArenaGameSession
                     
                     permaDeadPlayers.Remove(playerCreature);
                     SpawnPlayer(i);
-                    playerRespawnWait[i] = sittingData.respawnWait;
+                    sittingData.playerRespawnWait[i] = sittingData.respawnWait;
                 }
             }
         }
@@ -300,6 +297,24 @@ class WavesGameSession : ArenaGameSession
         }
         
         creatureSpawner = new WavesCreatureSpawner(abstractRoom, spawnList.ToArray(), OnSpawn);
+    }
+
+    private void SaveSession()
+    {
+        if (GameTypeSetup.savingAndLoadingSession && ArenaSittingHooks.TryGetData(arenaSitting, out var extras))
+        {
+            extras.currentWave = wave;
+
+            int maxTimeAlive = 0;
+            foreach (var p in arenaSitting.players)
+            {
+                if (p.timeAlive > maxTimeAlive)
+                    maxTimeAlive = p.timeAlive;
+            }
+
+            extras.totalTime = initialTotalTime + maxTimeAlive;
+            arenaSitting.SaveToFile(game.rainWorld);
+        }
     }
 
     public override bool ShouldSessionEnd()

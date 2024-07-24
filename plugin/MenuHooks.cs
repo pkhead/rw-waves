@@ -557,7 +557,7 @@ static class MenuHooks
                 self.spearHitScore = 1;
                 self.denEntryRule = ArenaSetup.GameTypeSetup.DenEntryRule.Standard;
                 self.repeatSingleLevelForever = true;
-                self.savingAndLoadingSession = false;
+                self.savingAndLoadingSession = true;
                 self.rainWhenOnePlayerLeft = false;
                 self.levelItems = true;
                 self.fliesSpawn = true;

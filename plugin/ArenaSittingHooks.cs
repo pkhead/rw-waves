@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace WavesMod;
 
@@ -16,6 +17,7 @@ static class ArenaSittingHooks
         public int currentWave = 0;
         public int totalTime = 0;
         public List<int> playerLives; // a life value of 0 means the player is on their last life. if dead, they will not respawn.
+        public List<int> playerRespawnWait;
 
         public int startingLives = 3;
         public WavesDifficultyOption difficulty = WavesDifficultyOption.Hard;
@@ -46,6 +48,7 @@ static class ArenaSittingHooks
                 data.difficulty = setupData.wavesDifficulty;
                 data.respawnWait = setupData.wavesRespawnWait;
                 data.playerLives = new();
+                data.playerRespawnWait = new();
             }
         };
 
@@ -61,6 +64,11 @@ static class ArenaSittingHooks
                 var data = cwt.GetOrCreateValue(self);
                 while (data.playerLives.Count <= playerNumber) data.playerLives.Add(0);
                 data.playerLives[playerNumber] = data.startingLives;
+
+                while (data.playerRespawnWait.Count <= playerNumber) data.playerRespawnWait.Add(int.MaxValue);
+                if (data.respawnWait >= 0) data.playerRespawnWait[playerNumber] = data.respawnWait;
+
+                WavesMod.Instance.logger.LogInfo($"Player {playerNumber} lives: {data.startingLives}");
             }
         };
 
@@ -76,6 +84,9 @@ static class ArenaSittingHooks
                 var data = cwt.GetOrCreateValue(self);
                 while (data.playerLives.Count <= playerNumber) data.playerLives.Add(0);
                 data.playerLives[playerNumber] = data.startingLives;
+
+                while (data.playerRespawnWait.Count <= playerNumber) data.playerRespawnWait.Add(int.MaxValue);
+                if (data.respawnWait >= 0) data.playerRespawnWait[playerNumber] = data.respawnWait;
 
                 WavesMod.Instance.logger.LogInfo($"Player {playerNumber} lives: {data.startingLives}");
             }
@@ -191,6 +202,144 @@ static class ArenaSittingHooks
             }
 
             orig(self, session);
+        };
+
+        // session saving
+        IL.ArenaSitting.SaveToFile += (il) =>
+        {
+            try
+            {
+                var cursor = new ILCursor(il);
+
+                cursor.GotoNext(
+                    x => x.MatchLdarg(1),
+                    x => x.MatchLdfld(typeof(RainWorld).GetField("options")),
+                    x => x.MatchLdloc(0),
+                    x => x.MatchCallvirt(typeof(Options).GetMethod("SaveArenaSitting", new Type[] { typeof(string) }))
+                );
+
+                cursor.Emit(OpCodes.Ldarg_0);
+                cursor.Emit(OpCodes.Ldloca_S, (byte)0);
+                cursor.EmitDelegate((ArenaSitting self, ref string text) =>
+                {
+                    if (self.gameTypeSetup.gameType == ArenaGameTypeID.Waves && cwt.TryGetValue(self, out var extras))
+                    {
+                        WavesMod.Instance.logger.LogInfo("Save arena session");
+                        text += "WAVES<ssB>";
+                        text += $"currentWave<sbpB>{extras.currentWave}<sbpA>";
+                        text += $"totalTime<sbpB>{extras.totalTime}<sbpA>";
+                        text += $"difficulty<sbpB>{extras.difficulty}<sbpA>";
+                        text += $"respawnWait<sbpB>{extras.respawnWait}<sbpA>";
+
+                        text += "playerLives<sbpB>";
+                        for (int i = 0; i < extras.playerLives.Count; i++)
+                        {
+                            if (i > 0) text += "<sbpC>";
+                            text += extras.playerLives[i];
+                        }
+                        text += "<sbpA>";
+
+                        text += "playerRespawnWaits<sbpB>";
+                        for (int i = 0; i < extras.playerRespawnWait.Count; i++)
+                        {
+                            if (i > 0) text += "<sbpC>";
+                            text += extras.playerRespawnWait[i];
+                        }
+                        text += "<sbpA>";
+
+                        text += "<ssA>";
+                    }
+
+                    WavesMod.Instance.logger.LogInfo("save: " + text);
+                });
+            }
+            catch (Exception e)
+            {
+                WavesMod.Instance.logger.LogError("IL.ArenaSitting.SaveToFile failed! " + e);
+            }
+        };
+
+        // session loading
+        IL.ArenaSitting.LoadFromFile += (il) =>
+        {
+            try
+            {
+                var cursor = new ILCursor(il);
+
+                // add code to the end of the function
+                // (but before the return call, obviously)
+                cursor.Index = cursor.Instrs.Count - 1;
+
+                cursor.Emit(OpCodes.Ldarg_0);
+                cursor.Emit(OpCodes.Ldloc_0);
+                cursor.EmitDelegate((ArenaSitting self, string[] ssaSplit) =>
+                {
+                    if (!cwt.TryGetValue(self, out var extras)) return;
+
+                    foreach (var ssa in ssaSplit)
+                    {
+                        var ssbSplit = Regex.Split(ssa, "<ssB>");
+                        if (ssbSplit.Length >= 2 && ssbSplit[0] == "WAVES")
+                        {
+                            var sbpASplit = Regex.Split(ssbSplit[1], "<sbpA>");
+                            foreach (var sbpA in sbpASplit)
+                            {
+                                var sbpBSplit = Regex.Split(sbpA, "<sbpB>");
+                                if (sbpBSplit.Length < 2) continue;
+                                
+                                switch (sbpBSplit[0])
+                                {
+                                    case "currentWave":
+                                        extras.currentWave = int.Parse(sbpBSplit[1], CultureInfo.InvariantCulture);
+                                        break;
+                                    
+                                    case "totalTime":
+                                        extras.totalTime = int.Parse(sbpBSplit[1], CultureInfo.InvariantCulture);
+                                        break;
+                                    
+                                    case "difficulty":
+                                        extras.difficulty = (WavesDifficultyOption) Enum.Parse(typeof(WavesDifficultyOption), sbpBSplit[1]);
+                                        break;
+                                    
+                                    case "respawnWait":
+                                        extras.respawnWait = int.Parse(sbpBSplit[1], CultureInfo.InvariantCulture);
+                                        break;
+                                    
+                                    case "playerLives":
+                                    {
+                                        var sbcSplit = Regex.Split(sbpBSplit[1], "<sbpC>");
+                                        extras.playerLives.Clear();
+                                        for (int i = 0; i < sbcSplit.Length; i++)
+                                        {
+                                            extras.playerLives.Add(int.Parse(sbcSplit[i], CultureInfo.InvariantCulture));
+                                        }
+                                        break;
+                                    }
+                                    
+                                    case "playerRespawnWaits":
+                                    {
+                                        var sbcSplit = Regex.Split(sbpBSplit[1], "<sbpC>");
+                                        extras.playerRespawnWait.Clear();
+                                        for (int i = 0; i < sbcSplit.Length; i++)
+                                        {
+                                            extras.playerRespawnWait.Add(int.Parse(sbcSplit[i], CultureInfo.InvariantCulture));
+                                        }
+                                        break;
+                                    }
+                                    
+                                    default:
+                                        WavesMod.Instance.logger.LogWarning($"Unrecognized save string option {sbpBSplit[0]}");
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            catch (Exception e)
+            {
+                WavesMod.Instance.logger.LogError("IL.ArenaSitting.LoadFromFile failed! " + e);
+            }
         };
     }
 
