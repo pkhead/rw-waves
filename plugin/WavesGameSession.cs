@@ -236,15 +236,7 @@ class WavesGameSession : ArenaGameSession
         }
 
         var abstractRoom = game.world.GetAbstractRoom(0);
-
-        // get nodes that are dens
-        var availableDens = new List<int>();
-        for (int i = 0; i < abstractRoom.nodes.Length; i++)
-        {
-            if (abstractRoom.nodes[i].type == AbstractRoomNode.Type.Den)
-                availableDens.Add(i);
-        }
-
+        
         // spawn creatures
         trackedCreatures.Clear();
         var spawnData = WaveSpawnData.Data[Math.Min(wave, WaveSpawnData.Data.Length - 1)];
@@ -253,10 +245,20 @@ class WavesGameSession : ArenaGameSession
         List<CreatureTemplate.Type> spawnList = new();
 
         // spawn creatures not tagged with Random first
+        bool hasSkyExit = abstractRoom.AnySkyAccess;
         for (int i = 0; i < spawnData.spawns.Length; i++)
         {
-            if (creaturesRemaining == 0) return;
-            if (spawnData.spawns[i].modifier != WaveSpawnData.SpawnModifier.RandomSpawn)
+            if (creaturesRemaining == 0) continue;
+
+            // NoSkyExit modifier
+            if (spawnData.spawns[i].modifier.HasFlag(WaveSpawnData.SpawnModifiers.NoSkyExit) && hasSkyExit)
+                continue;
+            
+            // don't spawn in sky creatures if there is no sky exit
+            if (WavesCreatureSpawner.IsSkyCreature(spawnData.spawns[i].template) && !hasSkyExit)
+                continue;
+            
+            if (!spawnData.spawns[i].modifier.HasFlag(WaveSpawnData.SpawnModifiers.RandomSpawn))
             {
                 spawnList.Add(spawnData.spawns[i].template);
                 creaturesRemaining--;
@@ -265,10 +267,19 @@ class WavesGameSession : ArenaGameSession
 
         // then for the remainder of the creatures randomly choose a creature
         // with the Random tag and spawn it
+        // first, collect a list of creatures tagged with RandomSpawn
         List<CreatureTemplate.Type> randomSpawns = new();
         for (int i = 0; i < spawnData.spawns.Length; i++)
         {
-            if (spawnData.spawns[i].modifier == WaveSpawnData.SpawnModifier.RandomSpawn)
+            // NoSkyExit modifier
+            if (spawnData.spawns[i].modifier.HasFlag(WaveSpawnData.SpawnModifiers.NoSkyExit) && hasSkyExit)
+                continue;
+
+            // don't spawn in sky creatures if there is no sky exit
+            if (WavesCreatureSpawner.IsSkyCreature(spawnData.spawns[i].template) && !hasSkyExit)
+                continue;
+            
+            if (spawnData.spawns[i].modifier.HasFlag(WaveSpawnData.SpawnModifiers.RandomSpawn))
                 randomSpawns.Add(spawnData.spawns[i].template);
         }
 
@@ -288,8 +299,7 @@ class WavesGameSession : ArenaGameSession
             creaturesRemaining--;
         }
         
-        creatureSpawner = new WavesCreatureSpawner(abstractRoom, spawnList.ToArray());
-        creatureSpawner.CreatureSpawned += OnSpawn;
+        creatureSpawner = new WavesCreatureSpawner(abstractRoom, spawnList.ToArray(), OnSpawn);
     }
 
     public override bool ShouldSessionEnd()

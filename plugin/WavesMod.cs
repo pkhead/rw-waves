@@ -101,7 +101,7 @@ namespace WavesMod
                     if (game.session is WavesGameSession session)
                     {
                         session.KillAll();
-                        session.wave = waveNumber; // no need to subtract 1, as killing all creatures will trigger the next wave
+                        session.wave = waveNumber - 2;
                     }
                 })
                 .Register();
