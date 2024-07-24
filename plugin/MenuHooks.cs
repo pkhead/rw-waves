@@ -36,6 +36,8 @@ static class MenuHooks
     class ArenaSettingsInterfaceExtras
     {
         public SelectOneButton[] respawnModes;
+        public MultipleChoiceArray respawnWaitArray;
+        public MenuLabel respawnModeLabel;
 
         public ArenaSettingsInterfaceExtras()
         {}
@@ -315,6 +317,8 @@ static class MenuHooks
 
             if (self.GetGameTypeSetup.gameType == ArenaGameTypeID.Waves)
             {
+                var extras = arenaSettingsInterfaceCwt.GetOrCreateValue(self);
+
                 self.spearsHitCheckbox = new CheckBox(menu, self, self, vector + new Vector2(0f, 220f), 120f, menu.Translate("Spears Hit:"), "SPEARSHIT", false);
                 self.subObjects.Add(self.spearsHitCheckbox);
                 self.evilAICheckBox = new CheckBox(menu, self, self, vector + new Vector2(num - 24f, 220f), InGameTranslator.LanguageID.UsesLargeFont(menu.CurrLang) ? 140f : 120f, menu.Translate("Aggressive AI:"), "EVILAI", false);
@@ -346,7 +350,7 @@ static class MenuHooks
 				self.subObjects.Add(livesChoiceArray);
 
                 // respawn wait
-                var respawnWaitArray = new MultipleChoiceArray(
+                var respawnWaitArray = extras.respawnWaitArray = new MultipleChoiceArray(
                     menu: menu,
                     owner: self,
                     reportTo: self,
@@ -364,7 +368,6 @@ static class MenuHooks
                 // radio buttons for respawn mode
                 // wow ui code in this game is stinky
                 var buttonWidth = num / 2f - 20f;
-                var extras = arenaSettingsInterfaceCwt.GetOrCreateValue(self);
 
                 MenuLabel respawnModeLabel;
                 self.subObjects.Add(respawnModeLabel = new MenuLabel(
@@ -378,6 +381,7 @@ static class MenuHooks
                 respawnModeLabel.label.color = Menu.Menu.MenuRGB(Menu.Menu.MenuColors.DarkGrey);
                 respawnModeLabel.label.alignment = FLabelAlignment.Left;
                 respawnModeLabel.label.anchorX = 0;
+                extras.respawnModeLabel = respawnModeLabel;
 
                 extras.respawnModes = new SelectOneButton[2];
                 extras.respawnModes[0] = new SelectOneButton(
@@ -406,6 +410,37 @@ static class MenuHooks
                 self.subObjects.Add(extras.respawnModes[1]);
 
                 return;
+            }
+        };
+
+        On.Menu.ArenaSettingsInterface.Update += (
+            On.Menu.ArenaSettingsInterface.orig_Update orig, ArenaSettingsInterface self
+        ) =>
+        {
+            orig(self);
+
+            if (arenaSettingsInterfaceCwt.TryGetValue(self, out var extras))
+            {
+                // if in single player mode, gray out options that are only applicable
+                // to multiplayer mode.
+                int playerCount = 0;
+                for (int i = 0; i < self.GetArenaSetup.playersJoined.Length; i++)
+                {
+                    if (self.GetArenaSetup.playersJoined[i])
+                    {
+                        playerCount++;
+                    }
+                }
+
+                bool singleplayerMode = playerCount < 2;
+                extras.respawnWaitArray.greyedOut = singleplayerMode;
+
+                foreach (var btn in extras.respawnModes)
+                    btn.buttonBehav.greyedOut = singleplayerMode;
+
+                extras.respawnModeLabel.label.color =
+                    singleplayerMode ? Menu.Menu.MenuRGB(Menu.Menu.MenuColors.VeryDarkGrey)
+                                     : Menu.Menu.MenuRGB(Menu.Menu.MenuColors.DarkGrey);
             }
         };
 

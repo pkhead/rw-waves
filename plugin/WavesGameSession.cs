@@ -440,6 +440,12 @@ class WavesGameSession : ArenaGameSession
             return orig(self);
         };
 
+        On.VultureAI.DisencouragedTracker.Utility += (On.VultureAI.DisencouragedTracker.orig_Utility orig, VultureAI.DisencouragedTracker self) =>
+        {
+            if (self.AI.creature.Room.world.game.session is WavesGameSession) return 0f;
+            return orig(self);
+        };
+
         // flies turn into spears when grabbed
         On.Fly.Update += (On.Fly.orig_Update orig, Fly self, bool eu) =>
         {

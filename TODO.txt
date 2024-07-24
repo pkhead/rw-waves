@@ -1,5 +1,5 @@
 - better info string
-- session persistence
+- session persistence (literally just need to save wave #, so hopefully not that hard)
 - is it compatible with Myriad?
   i have commented places of the code where i use a hard-coded max player count. ctrl+shift+f "myriad".
 
@@ -21,6 +21,8 @@
             (symbols except the plus sign represent creature symbols)
 
 - Maybe Think about adding upgrades over time (idk how that would work tho...)
+  i suppose the obtaining of explosive spears from scavengers count as "upgrades"...
+  except they are lost when everyone is dead. a bit annoying...
 
 - BUG: FIGURE OUT WHY SOMETIMES CREATURES DONT SPAWN IN A WAVE SO IT CONTINUOUSLY INCREASES!!!
 - BUG: Crouched down, stabbing a lizard, you grab a batfly, causes a crash
