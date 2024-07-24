@@ -139,11 +139,12 @@ class WaveSpawnData
 
         // Wave 9
         new(
-            amount: 4,
+            amount: 5,
             spawns: new WaveSpawn[]
             {
                 new(CreatureTemplate.Type.YellowLizard),
                 new(CreatureTemplate.Type.YellowLizard),
+                new(CreatureTemplate.Type.Scavenger),
                 new(CreatureTemplate.Type.BlueLizard, SpawnModifiers.RandomSpawn),
                 new(CreatureTemplate.Type.BlueLizard, SpawnModifiers.RandomSpawn),
                 new(CreatureTemplate.Type.GreenLizard, SpawnModifiers.RandomSpawn),
@@ -154,11 +155,12 @@ class WaveSpawnData
 
         // Wave 10
         new(
-            amount: 4,
+            amount: 5,
             spawns: new WaveSpawn[]
             {
                 new(CreatureTemplate.Type.CyanLizard),
                 new(CreatureTemplate.Type.CyanLizard),
+                new(CreatureTemplate.Type.Scavenger),
                 new(CreatureTemplate.Type.BlueLizard, SpawnModifiers.RandomSpawn),
                 new(CreatureTemplate.Type.YellowLizard, SpawnModifiers.RandomSpawn),
                 new(CreatureTemplate.Type.WhiteLizard, SpawnModifiers.RandomSpawn),
@@ -207,9 +209,10 @@ class WaveSpawnData
 
         // Wave 14
         new(
-            amount: 5,
+            amount: 6,
             spawns: new WaveSpawn[]
             {
+                new(CreatureTemplate.Type.Scavenger),
                 new(CreatureTemplate.Type.CyanLizard, SpawnModifiers.RandomSpawn),
                 new(CreatureTemplate.Type.WhiteLizard, SpawnModifiers.RandomSpawn),
                 new(CreatureTemplate.Type.BlueLizard, SpawnModifiers.RandomSpawn),
@@ -219,9 +222,10 @@ class WaveSpawnData
 
         // Wave 15
         new(
-            amount: 5,
+            amount: 6,
             spawns: new WaveSpawn[]
             {
+                new(CreatureTemplate.Type.Scavenger),
                 new(CreatureTemplate.Type.CyanLizard, SpawnModifiers.RandomSpawn),
                 new(CreatureTemplate.Type.WhiteLizard, SpawnModifiers.RandomSpawn),
                 new(CreatureTemplate.Type.BlueLizard, SpawnModifiers.RandomSpawn),
@@ -261,11 +265,13 @@ class WaveSpawnData
 
         // Wave 18
         new(
-            amount: 1,
+            amount: 3,
             spawns: new WaveSpawn[]
             {
                 new(CreatureTemplate.Type.KingVulture),
                 new(CreatureTemplate.Type.RedCentipede, SpawnModifiers.NoSkyExit),
+                new(CreatureTemplate.Type.Scavenger),
+                new(CreatureTemplate.Type.Scavenger),
             }
         ),
 
