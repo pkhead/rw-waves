@@ -54,8 +54,8 @@ class FlyTransformParticle : CosmeticSprite
 
         var drawLife = Mathf.Lerp(lastLife, life, timeStacker);
 
-        sprite.x = Mathf.Lerp(lastPos.x, pos.x, timeStacker);
-        sprite.y = Mathf.Lerp(lastPos.y, pos.y, timeStacker);
+        sprite.x = Mathf.Lerp(lastPos.x, pos.x, timeStacker) - rCam.pos.x;
+        sprite.y = Mathf.Lerp(lastPos.y, pos.y, timeStacker) - rCam.pos.y;
         sprite.alpha = 1f - (1f - life) * 3f % 1f;
         sprite.scaleX = drawLife * initScale;
         sprite.scaleY = drawLife * initScale;
