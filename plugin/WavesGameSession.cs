@@ -21,6 +21,10 @@ class WavesGameSession : ArenaGameSession
     private int nextWaveTimer = -1;
     private readonly int initialTotalTime = 0;
 
+    // grace period, after which exiting the session will decrease the
+    // player's life count...
+    private int gracePeriodTicker = 0;
+
     public WavesGameSession(RainWorldGame game) : base(game)
     {
         rainCycleTimeInMinutes = 0;
@@ -183,10 +187,7 @@ class WavesGameSession : ArenaGameSession
 
         Debug.Log("Spawn wave " + wave);
 
-        if (wave > 0)
-        {
-            SaveSession();
-        }
+        gracePeriodTicker = 40 * 5;
 
         // respawn previously dead players
         // if player count is 0, players might not have spawned yet
@@ -297,22 +298,58 @@ class WavesGameSession : ArenaGameSession
         }
         
         creatureSpawner = new WavesCreatureSpawner(abstractRoom, spawnList.ToArray(), OnSpawn);
+
+        if (wave > 0)
+            SaveSession(false);
     }
 
-    private void SaveSession()
+    private void SaveSession(bool quit)
     {
         if (GameTypeSetup.savingAndLoadingSession && ArenaSittingHooks.TryGetData(arenaSitting, out var extras))
         {
             extras.currentWave = wave;
 
-            int maxTimeAlive = 0;
-            foreach (var p in arenaSitting.players)
+            if (quit)
             {
-                if (p.timeAlive > maxTimeAlive)
-                    maxTimeAlive = p.timeAlive;
+                extras.totalTime = initialTotalTime;
+
+                if (gracePeriodTicker > 0)
+                {
+                    WavesMod.Instance.logger.LogInfo("Grace period");
+
+                    for (int i = 0; i < extras.playerLives.Count; i++)
+                    {
+                        if (extras.playerLives[i] > 0) extras.playerLives[i]++;
+                    }
+
+                }
+            }
+            else
+            {
+                int maxTimeAlive = 0;
+                foreach (var p in arenaSitting.players)
+                {
+                    if (p.timeAlive > maxTimeAlive)
+                        maxTimeAlive = p.timeAlive;
+                }
+
+                extras.totalTime = initialTotalTime + maxTimeAlive;
             }
 
-            extras.totalTime = initialTotalTime + maxTimeAlive;
+            // if the players leave 5 seconds after the wave starts,
+            // it decreases their karma, so they can't cheese it.
+            // (just like in story mode!)
+            // it seems that when reloading, the life count decreases by one
+            // (presumably because it has to spawn the player?)
+            // so i just add one to the life count if the player leaves during the grace period.
+            /*if (gracePeriodTicker > 0)
+            {
+                for (int i = 0; i < extras.playerLives.Count; i++)
+                {
+                    if (extras.playerLives[i] >= 0) extras.playerLives[i]++;
+                }
+            }*/
+
             arenaSitting.SaveToFile(game.rainWorld);
         }
     }
@@ -332,6 +369,8 @@ class WavesGameSession : ArenaGameSession
         base.Update();
 
         if (game.paused) return;
+
+        if (gracePeriodTicker > 0) gracePeriodTicker--;
 
         if (creatureSpawner is not null && creatureSpawner.Update())
             creatureSpawner = null;
@@ -395,6 +434,15 @@ class WavesGameSession : ArenaGameSession
                 nextWaveTimer = 120;
             }
         }
+    }
+
+    public override void ProcessShutDown()
+    {
+        base.ProcessShutDown();
+        
+        WavesMod.Instance.logger.LogInfo("Quit session");
+        if (wave > 0)
+            SaveSession(true);
     }
 
     public void KillAll()
@@ -637,6 +685,9 @@ class WavesGameSession : ArenaGameSession
                     // if the given player has at least one life, consume it to spawn the player
                     if (ArenaSittingHooks.TryGetData(self.arenaSitting, out var data))
                     {
+                        // wat...
+                        if (playerIndex >= data.playerLives.Count) return false;
+
                         var playerNumber = playerList[playerIndex].playerNumber;
                         if (data.playerLives[playerNumber] >= 1)
                         {
