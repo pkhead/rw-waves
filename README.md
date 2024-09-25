@@ -1,5 +1,5 @@
 # Waves
-A Rain World mod that reimplements the "Waves" arena mode that was scrapped by Videocult.
+A Rain World mod that reimplements the scrapped "Waves" arena mode. 
 
 ## Building
 This project will reference assemblies from the Rain World install directory as well as the Steam Workshop directories for its dependencies.

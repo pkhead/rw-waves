@@ -6,7 +6,9 @@ using System.Runtime.CompilerServices;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Globalization;
+using System.Reflection;
 using System.Text.RegularExpressions;
+using Menu;
 
 namespace WavesMod;
 
@@ -268,6 +270,11 @@ static class ArenaSittingHooks
 
                 // add code to the end of the function
                 // (but before the return call, obviously)
+
+                // why the hell is this an il hook then this could easily be an on hook.
+                // i think i was too lazy to convert it to one.
+                // oh nvm, i reference a local variable i guess. Idk i'm looking at this code
+                // like 3 months after i wrote it.
                 cursor.Index = cursor.Instrs.Count - 1;
 
                 cursor.Emit(OpCodes.Ldarg_0);
@@ -339,6 +346,84 @@ static class ArenaSittingHooks
             catch (Exception e)
             {
                 WavesMod.Instance.logger.LogError("IL.ArenaSitting.LoadFromFile failed! " + e);
+            }
+        };
+
+        // exit confirmation hooks
+        IL.Menu.PauseMenu.Singal += (il) =>
+        {
+            try
+            {
+                var cursor = new ILCursor(il);
+
+                // go to branch for exit signal
+                ILLabel exitSignalBranch = null;
+                cursor.GotoNext(
+                    x => x.MatchLdarg(2),
+                    x => x.MatchLdstr("EXIT"),
+                    x => x.MatchCall(typeof(string).GetMethod("op_Equality", BindingFlags.Public | BindingFlags.Static)),
+                    x => x.MatchBrtrue(out exitSignalBranch),
+                    x => x.MatchBr(out _)
+                );
+
+                if (exitSignalBranch is null)
+                    throw new NullReferenceException(nameof(exitSignalBranch) + " is null");
+                
+                // there is a flag variable that determines whether or not the exit confirmation
+                // should be displayed.
+                // override the value if it is a waves game session.
+                cursor.GotoLabel(exitSignalBranch);
+                cursor.GotoNext(
+                    MoveType.After,
+                    x => x.MatchStloc(0)
+                );
+                cursor.MoveAfterLabels();
+
+                cursor.Emit(OpCodes.Ldarg_0);
+                cursor.Emit(OpCodes.Ldloca, 0);
+                cursor.EmitDelegate((PauseMenu self, ref bool flag) =>
+                {
+                    if (self.game.session is WavesGameSession sesh)
+                        flag = sesh.gracePeriodTicker <= 0;
+                });
+            }
+            catch (Exception e)
+            {
+                WavesMod.Instance.logger.LogError("IL.Menu.PauseMenu.Singal failed! " + e);
+            }
+        };
+
+        // pause menu exit confirmation text hook
+        IL.Menu.PauseMenu.SpawnConfirmButtons += (il) =>
+        {
+            try
+            {
+                var cursor = new ILCursor(il);
+
+                cursor.GotoNext(
+                    MoveType.AfterLabel,
+                    x => x.MatchLdarg(0),
+                    x => x.MatchLdstr("Really exit? Note that quitting after 30 seconds into a cycle counts as a loss."),
+                    x => x.MatchCall(typeof(Menu.Menu).GetMethod("Translate", new Type[1] { typeof(string) }))
+                );
+                cursor.RemoveRange(3);
+
+                cursor.Emit(OpCodes.Ldarg_0);
+                cursor.EmitDelegate((PauseMenu self) =>
+                {
+                    if (self.game.session is WavesGameSession)
+                    {
+                        return "Really exit? Note that quitting after 10 seconds into a wave counts as a loss.";
+                    }
+                    else
+                    {
+                        return self.Translate("Really exit? Note that quitting after 30 seconds into a cycle counts as a loss.");
+                    }
+                });
+            }
+            catch (Exception e)
+            {
+                WavesMod.Instance.logger.LogError("IL.Menu.PauseMenu.SpawnConfirmButtons failed! " + e);
             }
         };
     }

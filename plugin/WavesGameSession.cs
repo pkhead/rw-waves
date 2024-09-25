@@ -23,7 +23,7 @@ class WavesGameSession : ArenaGameSession
 
     // grace period, after which exiting the session will decrease the
     // player's life count...
-    private int gracePeriodTicker = 0;
+    public int gracePeriodTicker = 0;
 
     public WavesGameSession(RainWorldGame game) : base(game)
     {
@@ -187,7 +187,7 @@ class WavesGameSession : ArenaGameSession
 
         Debug.Log("Spawn wave " + wave);
 
-        gracePeriodTicker = 40 * 5;
+        gracePeriodTicker = 40 * 10;
 
         // respawn previously dead players
         // if player count is 0, players might not have spawned yet
@@ -313,6 +313,12 @@ class WavesGameSession : ArenaGameSession
             {
                 extras.totalTime = initialTotalTime;
 
+                // if the players leave 10 seconds after the wave starts,
+                // it decreases their karma, so they can't cheese it.
+                // (just like in story mode!)
+                // it seems that when reloading, the life count decreases by one
+                // (presumably because it has to spawn the player?)
+                // so i just add one to the life count if the player leaves during the grace period.
                 if (gracePeriodTicker > 0)
                 {
                     WavesMod.Instance.logger.LogInfo("Grace period");
@@ -336,12 +342,6 @@ class WavesGameSession : ArenaGameSession
                 extras.totalTime = initialTotalTime + maxTimeAlive;
             }
 
-            // if the players leave 5 seconds after the wave starts,
-            // it decreases their karma, so they can't cheese it.
-            // (just like in story mode!)
-            // it seems that when reloading, the life count decreases by one
-            // (presumably because it has to spawn the player?)
-            // so i just add one to the life count if the player leaves during the grace period.
             /*if (gracePeriodTicker > 0)
             {
                 for (int i = 0; i < extras.playerLives.Count; i++)
@@ -369,7 +369,6 @@ class WavesGameSession : ArenaGameSession
         base.Update();
 
         if (game.paused) return;
-
         if (gracePeriodTicker > 0) gracePeriodTicker--;
 
         if (creatureSpawner is not null && creatureSpawner.Update())
