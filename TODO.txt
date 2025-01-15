@@ -3,6 +3,10 @@
   makes it so i don't have to add one for session saving I guess
 - is it compatible with Myriad?
   i have commented places of the code where i use a hard-coded max player count. ctrl+shift+f "myriad".
+- improve spawn data system:
+  - number for spawn chance multiplier (so i don't have to duplicate entries to make others less rarer)
+  - group spawns together (with the group itself able to have a random chance of spawning).
+    so that i can have groups of scavs randomly spawn in endless mode.
 
 - spawn configuration modes:
   - Preset: the spawn list that i created. does not care whether or not the user unlocked a creature.
