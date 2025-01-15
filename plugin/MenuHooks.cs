@@ -51,7 +51,7 @@ static class MenuHooks
         return gameTypeSetupCwt.GetOrCreateValue(setup);
     }
 
-    private const string WavesModeInfoString = "Conquer waves of opponents that get more difficult as you<LINE>progress. See how long you can last!";
+    private const string WavesModeInfoString = "Conquer never-ending waves of hungry creatures, each one more<LINE>difficult than the last. You will need to kill every hostile creature<LINE>in order to move on to the next wave. The game is over once every<LINE>player has ran out of lives. Try to see how long you can last!";
     public static void InitHooks()
     {
         ArenaGameTypeID.RegisterValues();
