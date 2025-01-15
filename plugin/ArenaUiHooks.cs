@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Globalization;
+using System;
 namespace WavesMod;
 
 static class ArenaUiHooks
@@ -33,6 +34,26 @@ static class ArenaUiHooks
                 self.headingLabel.text = 
                     canContinue ? string.Concat("WAVE ", wavesSession.wave+1)
                                 : string.Concat("WAVE ", wavesSession.wave+1, " - GAME OVER");
+            }
+        };
+
+        // hook into arena overlay result box update to make the time statistic tick faster
+        On.Menu.ArenaOverlayResultBox.Update += (On.Menu.ArenaOverlayResultBox.orig_Update orig, Menu.ArenaOverlayResultBox self) =>
+        {
+            orig(self);
+
+            // check if this is a waves game session
+            if (((self.menu as Menu.ArenaOverlay).manager.currentMainLoop as RainWorldGame).GetArenaGameSession is not WavesGameSession)
+                return;
+
+            if (self.timeSymbol.displayValue > -1 && !self.timeSymbol.countedAndDone)
+            {
+                if ((self.menu as Menu.PlayerResultMenu).NumbersTick)
+                {
+                    self.timeSymbol.Set(Math.Min(self.player.timeAlive / 40, self.timeSymbol.displayValue + 6));
+                }
+
+                self.timeSymbol.ChangeLabelText(" ~ " + self.SecondsToMinutesAndSecondsString(self.timeSymbol.displayValue));
             }
         };
 
