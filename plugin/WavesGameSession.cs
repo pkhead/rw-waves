@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using ArenaBehaviors;
 using UnityEngine;
 using Mono.Cecil.Cil;
@@ -236,7 +237,6 @@ class WavesGameSession : ArenaGameSession
         var abstractRoom = game.world.GetAbstractRoom(0);
         
         // spawn creatures
-        trackedCreatures.Clear();
         var spawnData = WaveSpawnData.Data[Math.Min(wave, WaveSpawnData.Data.Length - 1)];
 
         int creaturesRemaining = Random.Range(spawnData.minCreatures, spawnData.maxCreatures+1);
@@ -364,6 +364,13 @@ class WavesGameSession : ArenaGameSession
         trackedCreatures.Add(creature);
     }
 
+    private bool IsCreatureFriendly(Creature creature)
+    {
+        return creature is Lizard liz && liz.AI.friendTracker.friend is Player;
+    }
+
+    private int _dbgLastFriendCount = 0;
+
     public override void Update()
     {
         base.Update();
@@ -401,17 +408,30 @@ class WavesGameSession : ArenaGameSession
         else
         {
             bool noCreaturesRemaining = true;
+            var friendCount = 0;
+
             for (int i = trackedCreatures.Count - 1; i >= 0; i--)
             {
                 var creature = trackedCreatures[i];
+                var realized = creature.realizedCreature;
 
                 if (creature.state.alive)
                 {
+                    // if a lizard is a friend of the player, the player doesn't have to kill them
+                    // in order for the next wave to continue
+                    // but don't remove them from tracked creatures list in case they no longer like the player
+                    // afterwards
+                    if (realized is not null && IsCreatureFriendly(realized))
+                    {
+                        friendCount++;
+                    }
+                    
                     // if a creature wants to stay in den, stop tracking them and delete them
                     // ideally this behavior would be minimized but IDK how to code
                     // rather not deal with a softlock
-                    if (creature.InDen && creature.WantToStayInDenUntilEndOfCycle())
+                    else if (creature.InDen && creature.WantToStayInDenUntilEndOfCycle())
                     {
+                        Debug.Log("Creature wants to stay in den forever... remove");
                         creature.Room.RemoveEntity(creature);
                         creature.Destroy();
                         trackedCreatures.RemoveAt(i);
@@ -426,6 +446,12 @@ class WavesGameSession : ArenaGameSession
                     creature.realizedCreature.room.AddObject(new DespawnAnimation(creature.realizedCreature));
                     trackedCreatures.RemoveAt(i);
                 }
+            }
+
+            if (_dbgLastFriendCount != friendCount)
+            {
+                _dbgLastFriendCount = friendCount;
+                Debug.Log("Friend count changed to " + friendCount);
             }
 
             if (noCreaturesRemaining)
@@ -449,6 +475,8 @@ class WavesGameSession : ArenaGameSession
         for (int i = trackedCreatures.Count - 1; i >= 0; i--)
         {
             var creature = trackedCreatures[i];
+            if (creature.realizedCreature is not null && IsCreatureFriendly(creature.realizedCreature))
+                continue;
 
             if (creature.realizedCreature is not null)
             {
@@ -500,6 +528,42 @@ class WavesGameSession : ArenaGameSession
         {
             if (self.AI.creature.Room.world.game.session is WavesGameSession) return 0f;
             return orig(self);
+        };
+
+        // make it so lizards are friendly to every player if they are tamed.
+        // this enables that code path normally only enabled by the jolly co-op Friendly Lizards option.
+        IL.LizardAI.IUseARelationshipTracker_UpdateDynamicRelationship += (il) =>
+        {
+            try
+            {
+                var cursor = new ILCursor(il);
+
+                // source:  if (ModManager.CoopAvailable && Custom.rainWorld.options.friendlyLizards)
+                // desired: if (this.creature.Room.world.game.session is WavesGameSession || (Custom.rainWorldModManager.CoopAvailable && Custom.rainWorld.options.friendlyLizards))
+                var branchLabel = cursor.DefineLabel();
+
+                cursor.GotoNext(MoveType.Before,
+                    x => x.MatchLdsfld(typeof(ModManager).GetField("CoopAvailable", BindingFlags.Public | BindingFlags.Static)),
+                    x => x.MatchBrfalse(out _),
+                    x => x.MatchLdsfld(typeof(RWCustom.Custom).GetField("rainWorld", BindingFlags.Public | BindingFlags.Static)),
+                    x => x.MatchLdfld(typeof(RainWorld).GetField("options")),
+                    x => x.MatchLdfld(typeof(Options).GetField("friendlyLizards")),
+                    x => x.MatchBrfalse(out _)
+                );
+
+                cursor.Emit(OpCodes.Ldarg_0);
+                cursor.EmitDelegate((LizardAI self) =>
+                {
+                    return self.creature.Room.world.game.session is WavesGameSession;
+                });
+                cursor.Emit(OpCodes.Brtrue, branchLabel);
+                cursor.Index += 6;
+                cursor.MarkLabel(branchLabel);
+            }
+            catch (Exception e)
+            {
+                WavesMod.Instance.logger.LogError("IL.LizardAI.IUseARelationshipTracker_UpdateDynamicRelationship failed! " + e);
+            }
         };
 
         On.VultureAI.DisencouragedTracker.Utility += (On.VultureAI.DisencouragedTracker.orig_Utility orig, VultureAI.DisencouragedTracker self) =>

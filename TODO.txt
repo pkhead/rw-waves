@@ -1,10 +1,13 @@
 - better info string
-- session persistence (literally just need to save wave #, so hopefully not that hard)
+- session saves friendly creatures and objects in room
+- make player lives number of current characters rather than available stock
+  makes it so i don't have to add one for session saving I guess
 - is it compatible with Myriad?
   i have commented places of the code where i use a hard-coded max player count. ctrl+shift+f "myriad".
 
 - spawn configuration modes:
   - Preset: the spawn list that i created. does not care whether or not the user unlocked a creature.
+  - Randomized: endless set of randomized creatures
   - Custom: user can customize spawns from the arena menu. can only add unlocked creatures.
             each wave will be represented by a big ass block. below is a sample of what one would look like.
 
@@ -20,9 +23,10 @@
 
             (symbols except the plus sign represent creature symbols)
 
-- Maybe Think about adding upgrades over time (idk how that would work tho...)
-  i suppose the obtaining of explosive spears from scavengers count as "upgrades"...
-  except they are lost when everyone is dead. a bit annoying...
+- after every 10th wave, one of three randomly chosen events will happen:
+  - give everyone an extra life
+  - spawn 3-5 explosive spears
+  - spawn 1-3 bombs
 
 - BUG: life reloading on session reloadis buggy...
 - BUG: FIGURE OUT WHY SOMETIMES CREATURES DONT SPAWN IN A WAVE SO IT CONTINUOUSLY INCREASES!!!
