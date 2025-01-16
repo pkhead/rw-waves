@@ -132,5 +132,24 @@ Task("Install")
     CopyDirectory("./out", modOutputDir);
 });
 
+// TODO: remove code duplication
+Task("AssetsOnly")
+    .Does(() =>
+{
+    EnsureDirectoryExists("./out");
+    CleanDirectory("./out");
+    CopyDirectory("./assets", "./out");
+    CreateDirectory("./out/plugins");
+    
+    CopyFile($"./plugin/bin/{configuration}/net48/{ProjectName}.dll", $"./out/plugins/{ProjectName}.dll");
+    CopyFile($"./plugin/bin/{configuration}/net48/{ProjectName}.pdb", $"./out/plugins/{ProjectName}.pdb");
+
+    var modOutputDir = rainWorldDir + $"/RainWorld_Data/StreamingAssets/mods/{ModId}";
+
+    EnsureDirectoryExists(modOutputDir);
+    CleanDirectory(modOutputDir);
+    CopyDirectory("./out", modOutputDir);
+});
+
 // execution
 RunTarget(target);

@@ -50,4 +50,8 @@
 	<ItemGroup>
 		<Reference Include="../deps/DevConsole.dll" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="CompactJson.Sources" Version="1.2.3" />
+	</ItemGroup>
 </Project>

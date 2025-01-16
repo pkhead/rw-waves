@@ -17,6 +17,7 @@ class WavesGameSession : ArenaGameSession
     private readonly HashSet<AbstractCreature> permaDeadPlayers;
     private WavesCreatureSpawner creatureSpawner = null;
     private readonly List<(HUD.PlayerSpecificMultiplayerHud hud, AbstractCreature newCreature)> stalePlayerHuds = new();
+    private readonly WaveSpawnData.WaveData[] waveData;
 
     public int wave = -1;
     private int nextWaveTimer = -1;
@@ -28,6 +29,8 @@ class WavesGameSession : ArenaGameSession
 
     public WavesGameSession(RainWorldGame game) : base(game)
     {
+        waveData = WaveSpawnData.Read();
+
         rainCycleTimeInMinutes = 0;
         trackedCreatures = new();
         permaDeadPlayers = new();
@@ -237,7 +240,7 @@ class WavesGameSession : ArenaGameSession
         var abstractRoom = game.world.GetAbstractRoom(0);
         
         // spawn creatures
-        var spawnData = WaveSpawnData.Data[Math.Min(wave, WaveSpawnData.Data.Length - 1)];
+        var spawnData = waveData[Math.Min(wave, waveData.Length - 1)];
 
         int creaturesRemaining = Random.Range(spawnData.minCreatures, spawnData.maxCreatures+1);
         List<CreatureTemplate.Type> spawnList = new();

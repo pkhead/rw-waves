@@ -1,8 +1,19 @@
+using System;
+using System.IO;
+using CompactJson;
+
 namespace WavesMod;
 
 class WaveSpawnData
 {
-    [System.Flags]
+    public static WaveData[] Read()
+    {
+        var jsonFile = AssetManager.ResolveFilePath("wavedata/default.json");
+        using var stream = File.OpenText(jsonFile);
+        return CompactJson.Serializer.Parse<WaveData[]>(stream);
+    }
+
+    [Flags]
     public enum SpawnModifiers
     {
         None = 0,
@@ -10,319 +21,69 @@ class WaveSpawnData
         NoSkyExit = 2, // substitutes a vulture in maps where there is no sky exit
     }
 
-    public struct WaveSpawn
+    public class WaveSpawn
     {
+        [JsonIgnoreMember]
         public CreatureTemplate.Type template;
-        public SpawnModifiers modifier;
 
-        public WaveSpawn(CreatureTemplate.Type template, SpawnModifiers modifier = SpawnModifiers.None)
-        {
-            this.template = template;
-            this.modifier = modifier;
+        [JsonIgnoreMember]
+        public SpawnModifiers modifier = SpawnModifiers.None;
+
+        [JsonProperty("type")]
+        public string Type {
+            set
+            {
+                template = 
+                    (CreatureTemplate.Type) (typeof(CreatureTemplate.Type).GetField(value)?.GetValue(null)) ??
+                    (CreatureTemplate.Type) (typeof(MoreSlugcats.MoreSlugcatsEnums.CreatureTemplateType).GetField(value)?.GetValue(null)) ??
+                    throw new ArgumentException("Unknown template type " + value, nameof(value));
+                WavesMod.Instance.logger.LogInfo(value);
+                WavesMod.Instance.logger.LogInfo(template);
+            }
+        }
+
+        [JsonProperty("modifiers")]
+        public string[] Modifiers {
+            set
+            {
+                modifier = SpawnModifiers.None;
+                foreach (var item in value)
+                {
+                    modifier |= item switch
+                    {
+                        "RandomSpawn" => SpawnModifiers.RandomSpawn,
+                        "NoSkyExit" => SpawnModifiers.NoSkyExit,
+                        _ => throw new ArgumentException($"Invalid spawn modifier {item}")
+                    };
+                }
+            }
         }
     }
 
-    public record WaveData
+    public class WaveData
     {
+        [JsonIgnoreMember]
         public int minCreatures, maxCreatures;
         public WaveSpawn[] spawns;
 
-        public WaveData(int min, int max, WaveSpawn[] spawns)
-        {
-            minCreatures = min;
-            maxCreatures = max;
-            this.spawns = spawns;
+        [JsonProperty("amount")]
+        public int Amount {
+            set
+            {
+                minCreatures = maxCreatures = value;
+            }
         }
 
-        public WaveData(int amount, WaveSpawn[] spawns)
-        {
-            minCreatures = amount;
-            maxCreatures = amount;
-            this.spawns = spawns;
+        [JsonProperty("min")]
+        public int Min {
+            get => minCreatures;
+            set => minCreatures = value;
+        }
+
+        [JsonProperty("max")]
+        public int Max {
+            get => maxCreatures;
+            set => maxCreatures = value;
         }
     }
-
-    public static readonly WaveData[] Data = new WaveData[]
-    {
-        // Wave 1
-        new(
-            amount: 1,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.PinkLizard)
-            }
-        ),
-
-        // Wave 2
-        new(
-            amount: 2,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.PinkLizard),
-                new(CreatureTemplate.Type.PinkLizard)
-            }
-        ),
-
-        // Wave 3
-        new(
-            amount: 3,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.PinkLizard),
-                new(CreatureTemplate.Type.PinkLizard),
-                new(CreatureTemplate.Type.GreenLizard),
-            }
-        ),
-
-        // Wave 4
-        new(
-            amount: 3,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.PinkLizard),
-                new(CreatureTemplate.Type.BlueLizard),
-                new(CreatureTemplate.Type.GreenLizard),
-            }
-        ),
-
-        // Wave 5
-        new(
-            min: 3,
-            max: 4,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.GreenLizard),
-                new(CreatureTemplate.Type.PinkLizard),
-                new(CreatureTemplate.Type.BlueLizard, SpawnModifiers.RandomSpawn),
-            }
-        ),
-
-        // Wave 6
-        new(
-            min: 3,
-            max: 4,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.PinkLizard),
-                new(CreatureTemplate.Type.BlueLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.BlueLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.WhiteLizard, SpawnModifiers.RandomSpawn),
-            }
-        ),
-
-        // Wave 7
-        new(
-            amount: 4,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.YellowLizard),
-                new(CreatureTemplate.Type.YellowLizard),
-                new(CreatureTemplate.Type.YellowLizard),
-                new(CreatureTemplate.Type.YellowLizard),
-            }
-        ),
-        
-        // Wave 8
-        new(
-            amount: 3,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.YellowLizard),
-                new(CreatureTemplate.Type.YellowLizard),
-                new(CreatureTemplate.Type.BlueLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.BlueLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.GreenLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.WhiteLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.GreenLizard, SpawnModifiers.RandomSpawn),
-            }
-        ),
-
-        // Wave 9
-        new(
-            amount: 5,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.YellowLizard),
-                new(CreatureTemplate.Type.YellowLizard),
-                new(CreatureTemplate.Type.Scavenger),
-                new(CreatureTemplate.Type.BlueLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.BlueLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.GreenLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.WhiteLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.GreenLizard, SpawnModifiers.RandomSpawn),
-            }
-        ),
-
-        // Wave 10
-        new(
-            amount: 5,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.CyanLizard),
-                new(CreatureTemplate.Type.CyanLizard),
-                new(CreatureTemplate.Type.Scavenger),
-                new(CreatureTemplate.Type.BlueLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.YellowLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.WhiteLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.GreenLizard, SpawnModifiers.RandomSpawn),
-            }
-        ),
-
-        // Wave 11
-        new(
-            amount: 5,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.Centipede),
-                new(CreatureTemplate.Type.Centipede),
-                new(CreatureTemplate.Type.Centipede),
-                new(CreatureTemplate.Type.Centipede),
-                new(CreatureTemplate.Type.Centipede),
-            }
-        ),
-
-        // Wave 12
-        new(
-            amount: 6,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.Scavenger),
-                new(CreatureTemplate.Type.Scavenger),
-                new(CreatureTemplate.Type.Scavenger),
-                new(CreatureTemplate.Type.Scavenger),
-                new(CreatureTemplate.Type.Scavenger),
-            }
-        ),
-
-        // Wave 13
-        new(
-            amount: 5,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.Scavenger),
-                new(CreatureTemplate.Type.Scavenger),
-                new(CreatureTemplate.Type.Scavenger),
-                new(CreatureTemplate.Type.Scavenger),
-                new(CreatureTemplate.Type.Vulture),
-            }
-        ),
-
-        // Wave 14
-        new(
-            amount: 6,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.Scavenger),
-                new(CreatureTemplate.Type.CyanLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.WhiteLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.BlueLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.Vulture, SpawnModifiers.RandomSpawn)
-            }
-        ),
-
-        // Wave 15
-        new(
-            amount: 6,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.Scavenger),
-                new(CreatureTemplate.Type.CyanLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.WhiteLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.BlueLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.Vulture, SpawnModifiers.RandomSpawn)
-            }
-        ),
-
-        // Wave 16
-        new(
-            amount: 7,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.Scavenger),
-                new(CreatureTemplate.Type.Scavenger),
-                new(CreatureTemplate.Type.Scavenger),
-                new(CreatureTemplate.Type.Scavenger),
-                new(CreatureTemplate.Type.Scavenger),
-                new(CreatureTemplate.Type.Scavenger),
-                new(CreatureTemplate.Type.Scavenger),
-            }
-        ),
-
-        // Wave 17
-        new(
-            amount: 5,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.YellowLizard),
-                new(CreatureTemplate.Type.YellowLizard),
-                new(CreatureTemplate.Type.YellowLizard),
-                new(CreatureTemplate.Type.Vulture),
-                new(CreatureTemplate.Type.Vulture),
-                new(CreatureTemplate.Type.Centipede, SpawnModifiers.NoSkyExit),
-                new(CreatureTemplate.Type.Centipede, SpawnModifiers.NoSkyExit),
-            }
-        ),
-
-        // Wave 18
-        new(
-            amount: 3,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.KingVulture),
-                new(CreatureTemplate.Type.RedCentipede, SpawnModifiers.NoSkyExit),
-                new(CreatureTemplate.Type.Scavenger),
-                new(CreatureTemplate.Type.Scavenger),
-            }
-        ),
-
-        // wave 19
-        new(
-            amount: 6,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.YellowLizard),
-                new(CreatureTemplate.Type.YellowLizard),
-                new(CreatureTemplate.Type.YellowLizard),
-                new(CreatureTemplate.Type.YellowLizard),
-                new(CreatureTemplate.Type.YellowLizard),
-                new(CreatureTemplate.Type.YellowLizard),
-            }
-        ),
-
-        // wave 20 (imposibble!!!)
-        new(
-            amount: 1,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.RedLizard),
-            }
-        ),
-
-        // FINAL WAVE... goes on forever
-        new(
-            min: 5,
-            max: 8,
-            spawns: new WaveSpawn[]
-            {
-                new(CreatureTemplate.Type.PinkLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.GreenLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.BlueLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.WhiteLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.CyanLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.YellowLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.Vulture, SpawnModifiers.RandomSpawn),
-
-                // duplicated twice to make the king vulture spawn rarer, lel...
-                new(CreatureTemplate.Type.PinkLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.GreenLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.BlueLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.WhiteLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.CyanLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.YellowLizard, SpawnModifiers.RandomSpawn),
-                new(CreatureTemplate.Type.Vulture, SpawnModifiers.RandomSpawn),
-
-                new(CreatureTemplate.Type.KingVulture, SpawnModifiers.RandomSpawn),
-            }
-        ),
-    };
 }
