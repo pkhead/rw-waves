@@ -8,7 +8,8 @@
             "args": ["cake"],
             "options": {
                 "env": {
-                    "RainWorldDir": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Rain World"
+                    "RainWorldDir": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Rain World",
+                    "CAKE_SETTINGS_ENABLESCRIPTCACHE": "true"
                 }
             },
             "group": {

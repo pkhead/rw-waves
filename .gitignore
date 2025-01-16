@@ -10,3 +10,6 @@
 
 # mod build output
 /out
+
+# miscellaneous
+tools/cache
