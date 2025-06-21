@@ -13,14 +13,14 @@ using DevConsole.Commands;
 
 namespace WavesMod
 {
-    [BepInPlugin(MOD_ID, "Waves", VERSION)]
+    [BepInPlugin(MOD_ID, "Arena Waves", VERSION)]
     partial class WavesMod : BaseUnityPlugin
     {
         public static WavesMod Instance;
 
         public const string MOD_ID = "pkhead.waves";
         public const string AUTHOR = "pkhead";
-        public const string VERSION = "0.1.0";
+        public const string VERSION = "1.0.0";
 
         private bool isInit = false;
         public BepInEx.Logging.ManualLogSource logger;
