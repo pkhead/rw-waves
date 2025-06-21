@@ -24,7 +24,7 @@ class WavesCreatureSpawner
     {
         return templateType == CreatureTemplate.Type.Vulture ||
                templateType == CreatureTemplate.Type.KingVulture ||
-               templateType == MoreSlugcats.MoreSlugcatsEnums.CreatureTemplateType.MirosVulture;
+               templateType == DLCSharedEnums.CreatureTemplateType.MirosVulture;
     }
 
     public WavesCreatureSpawner(AbstractRoom room, CreatureTemplate.Type[] creatures, Action<AbstractCreature> spawnCallback)

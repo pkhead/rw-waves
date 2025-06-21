@@ -2,9 +2,9 @@
     "id": "pkhead.waves",
     "name": "Arena Waves",
     "version": "0.1.0",
-    "target_game_version": "v1.9.15",
+    "target_game_version": "v1.10",
     "authors": "pkhead",
-    "description": "ALPHA WAVES MODE",
-    "tags": [],
+    "description": "Adds a new gamemode to Arena. Conquer never-ending waves of hungry creatures, each one more difficult than the last. You will need to kill every hostile creature in order to move on to the next wave. The game is over once every player has ran out of lives. Try to see how long you can last!",
+    "tags": ["Game Modes"],
     "checksum_override_version": false
 }
