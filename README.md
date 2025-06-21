@@ -1,5 +1,7 @@
 # Waves
-A Rain World mod that reimplements the scrapped "Waves" arena mode. 
+Adds a new game mode to Arena. Conquer never-ending waves of hungry creatures, each one more difficult than the last. You will need to kill every hostile creature in order to move on to the next wave. The game is over once every player has ran out of lives. Try to see how long you can last!
+
+This is based off the scrapped Waves game mode present in some alpha builds of Rain World.
 
 ## Building
 This project will reference assemblies from the Rain World install directory as well as the Steam Workshop directories for its dependencies.
