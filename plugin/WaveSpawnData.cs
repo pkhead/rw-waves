@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using CompactJson;
+using UnityEngine;
 
 namespace WavesMod;
 
@@ -8,9 +9,27 @@ class WaveSpawnData
 {
     public static WaveData[] Read()
     {
+        Debug.Log("CALL READ!!!");
+        
         var jsonFile = AssetManager.ResolveFilePath("wavedata/default.json");
         using var stream = File.OpenText(jsonFile);
-        return CompactJson.Serializer.Parse<WaveData[]>(stream);
+        var data = CompactJson.Serializer.Parse<WaveData[]>(stream);
+
+        foreach (var spawn in data[0].spawns)
+        {
+            Debug.Log(spawn.template);
+            if (spawn.IDs != null)
+            {
+                foreach (var i in spawn.IDs)
+                    Debug.Log("potential id: " + i);
+            }
+            else
+            {
+                Debug.Log("creature had no IDs");
+            }
+        }
+
+        return data;
     }
 
     [Flags]
@@ -68,6 +87,10 @@ class WaveSpawnData
                 }
             }
         }
+
+        [JsonProperty("ids")]
+        [JsonEmitNullValue]
+        public int[] IDs { get; set; }
     }
 
     public class WaveData

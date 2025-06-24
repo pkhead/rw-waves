@@ -11,12 +11,24 @@ namespace WavesMod;
 // However with this WavesCreatureSpawner, they come out more slowly,
 // which may be more desirable.
 
+struct CreatureSpawnData
+{
+    public CreatureTemplate.Type type;
+    public EntityID? id;
+
+    public CreatureSpawnData(CreatureTemplate.Type type, EntityID? id)
+    {
+        this.type = type;
+        this.id = id;
+    }
+}
+
 class WavesCreatureSpawner
 {
     private Action<AbstractCreature> creatureSpawnCb;
 
     private readonly AbstractRoom room;
-    private readonly Queue<CreatureTemplate.Type> creatureQueue;
+    private readonly Queue<CreatureSpawnData> creatureQueue;
     private readonly int[] denIndices;
     private readonly int[] shuffledDenIndexIndices;
 
@@ -27,7 +39,7 @@ class WavesCreatureSpawner
                templateType == DLCSharedEnums.CreatureTemplateType.MirosVulture;
     }
 
-    public WavesCreatureSpawner(AbstractRoom room, CreatureTemplate.Type[] creatures, Action<AbstractCreature> spawnCallback)
+    public WavesCreatureSpawner(AbstractRoom room, CreatureSpawnData[] creatures, Action<AbstractCreature> spawnCallback)
     {
         this.room = room;
         creatureSpawnCb = spawnCallback;
@@ -52,23 +64,21 @@ class WavesCreatureSpawner
         // spawn vultures in off-screen dens
         // if there are no sky exits, still iterate through this loop because
         // i need to exclude vultures from the creature queue
-        creatureQueue = new Queue<CreatureTemplate.Type>();
+        creatureQueue = new Queue<CreatureSpawnData>();
 
-        foreach (var creatureType in creatures)
+        foreach (var creatureData in creatures)
         {
-            if (IsSkyCreature(creatureType))
+            if (IsSkyCreature(creatureData.type))
             {
                 if (!skyAccess) continue;
-                var coords = new WorldCoordinate(room.world.offScreenDen.index, -1, -1, 0);
-                var template = StaticWorld.GetCreatureTemplate(creatureType);
-                var creature = new AbstractCreature(room.world, template, null, coords, room.world.game.GetNewID());
+                var creature = CreateCreature(creatureData, room.world.offScreenDen.index, 0);
                 room.world.offScreenDen.AddEntity(creature);
 
                 creatureSpawnCb(creature);
             }
             else
             {
-                creatureQueue.Enqueue(creatureType);
+                creatureQueue.Enqueue(creatureData);
             }
         }
     }
@@ -133,13 +143,20 @@ class WavesCreatureSpawner
         }
     }
 
-    private void SpawnCreature(CreatureTemplate.Type type, int abstractNode)
+    private void SpawnCreature(CreatureSpawnData spawn, int abstractNode)
     {
-        var coords = new WorldCoordinate(room.index, -1, -1, abstractNode);
-        var template = StaticWorld.GetCreatureTemplate(type);
-        var creature = new AbstractCreature(room.world, template, null, coords, room.world.game.GetNewID());
+        var creature = CreateCreature(spawn, room.index, abstractNode);
         room.MoveEntityToDen(creature);
 
         creatureSpawnCb(creature);
+    }
+
+    private AbstractCreature CreateCreature(CreatureSpawnData creatureSpawn, int roomIndex, int abstractNode)
+    {
+        var coords = new WorldCoordinate(roomIndex, -1, -1, abstractNode);
+        var template = StaticWorld.GetCreatureTemplate(creatureSpawn.type);
+        var creature = new AbstractCreature(room.world, template, null, coords, creatureSpawn.id ?? room.world.game.GetNewID());
+
+        return creature;
     }
 }

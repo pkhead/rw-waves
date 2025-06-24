@@ -243,7 +243,20 @@ class WavesGameSession : ArenaGameSession
         var spawnData = waveData[Math.Min(wave, waveData.Length - 1)];
 
         int creaturesRemaining = Random.Range(spawnData.minCreatures, spawnData.maxCreatures+1);
-        List<CreatureTemplate.Type> spawnList = new();
+        List<CreatureSpawnData> spawnList = new();
+
+        static CreatureSpawnData CreateSpawnData(WaveSpawnData.WaveSpawn jsonData)
+        {
+            if (jsonData.IDs != null && jsonData.IDs.Length > 0)
+            {
+                var idNum = jsonData.IDs[Random.Range(0, jsonData.IDs.Length)];
+                return new CreatureSpawnData(jsonData.template, new EntityID(-1, idNum));
+            }
+            else
+            {
+                return new CreatureSpawnData(jsonData.template, null);
+            }
+        }
 
         // spawn creatures not tagged with Random first
         bool hasSkyExit = abstractRoom.AnySkyAccess;
@@ -261,7 +274,7 @@ class WavesGameSession : ArenaGameSession
             
             if (!spawnData.spawns[i].modifier.HasFlag(WaveSpawnData.SpawnModifiers.RandomSpawn))
             {
-                spawnList.Add(spawnData.spawns[i].template);
+                spawnList.Add(CreateSpawnData(spawnData.spawns[i]));
                 creaturesRemaining--;
             }
         }
@@ -269,7 +282,7 @@ class WavesGameSession : ArenaGameSession
         // then for the remainder of the creatures randomly choose a creature
         // with the Random tag and spawn it
         // first, collect a list of creatures tagged with RandomSpawn
-        List<CreatureTemplate.Type> randomSpawns = new();
+        List<CreatureSpawnData> randomSpawns = new();
         for (int i = 0; i < spawnData.spawns.Length; i++)
         {
             // NoSkyExit modifier
@@ -281,7 +294,7 @@ class WavesGameSession : ArenaGameSession
                 continue;
             
             if (spawnData.spawns[i].modifier.HasFlag(WaveSpawnData.SpawnModifiers.RandomSpawn))
-                randomSpawns.Add(spawnData.spawns[i].template);
+                randomSpawns.Add(CreateSpawnData(spawnData.spawns[i]));
         }
 
         // if no creatures were tagged with RandomSpawn, then just randomly select
@@ -290,7 +303,7 @@ class WavesGameSession : ArenaGameSession
         {
             for (int i = 0; i < spawnData.spawns.Length; i++)
             {
-                randomSpawns.Add(spawnData.spawns[i].template);
+                randomSpawns.Add(CreateSpawnData(spawnData.spawns[i]));
             }   
         }
 
