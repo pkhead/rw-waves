@@ -20,7 +20,7 @@ namespace WavesMod
 
         public const string MOD_ID = "pkhead.waves";
         public const string AUTHOR = "pkhead";
-        public const string VERSION = "1.0.0";
+        public const string VERSION = "1.0.1";
 
         private bool isInit = false;
         public BepInEx.Logging.ManualLogSource logger;
