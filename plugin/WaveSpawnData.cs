@@ -35,7 +35,7 @@ class WaveSpawnData
             {
                 template = (CreatureTemplate.Type) (typeof(CreatureTemplate.Type).GetField(value)?.GetValue(null));
 
-                if (template is null && (ModManager.MSC || ModManager.Watcher))
+                if (template is null && ModManager.DLCShared)
                     template = (CreatureTemplate.Type) (typeof(DLCSharedEnums.CreatureTemplateType).GetField(value)?.GetValue(null));
 
                 if (template is null && ModManager.Watcher)
