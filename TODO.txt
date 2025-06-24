@@ -32,8 +32,6 @@
   - spawn 1-3 bombs
 
 - BUG: life reloading on session reloadis buggy...
-- BUG: FIGURE OUT WHY SOMETIMES CREATURES DONT SPAWN IN A WAVE SO IT CONTINUOUSLY INCREASES!!!
 - BUG: Crouched down, stabbing a lizard, you grab a batfly, causes a crash
-- BUG: I think when a lizard is in their den and is full they stay there forever but doesn't trigger the next wave
 - BUG: Sometimes creatures will only come out of one den (idk why)
 - BUG: lizards don't acknowledge player corpses if they died last round

@@ -28,6 +28,7 @@ class DespawnAnimation : UpdatableAndDeletable
         if (phase == 0 && creature.room is null)
         {
             creature.abstractCreature.Room?.RemoveEntity(creature.abstractCreature);
+            creature.Destroy();
             Destroy();
         }
 

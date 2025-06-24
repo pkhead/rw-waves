@@ -432,7 +432,7 @@ class WavesGameSession : ArenaGameSession
                     // if a creature wants to stay in den, stop tracking them and delete them
                     // ideally this behavior would be minimized but IDK how to code
                     // rather not deal with a softlock
-                    else if (creature.InDen && creature.WantToStayInDenUntilEndOfCycle())
+                    else if (creature.InDen && (creature.WantToStayInDenUntilEndOfCycle() || creature.remainInDenCounter == -1))
                     {
                         Debug.Log("Creature wants to stay in den forever... remove");
                         creature.Room.RemoveEntity(creature);
@@ -447,6 +447,11 @@ class WavesGameSession : ArenaGameSession
                 else if (creature.realizedCreature?.room is not null)
                 {
                     creature.realizedCreature.room.AddObject(new DespawnAnimation(creature.realizedCreature));
+                    trackedCreatures.RemoveAt(i);
+                } else {
+                    Debug.Log("creature died but is not realized or in a room. Destroy!");
+                    creature.Room.RemoveEntity(creature);
+                    creature.Destroy();
                     trackedCreatures.RemoveAt(i);
                 }
             }
@@ -535,6 +540,8 @@ class WavesGameSession : ArenaGameSession
 
         // make it so lizards are friendly to every player if they are tamed.
         // this enables that code path normally only enabled by the jolly co-op Friendly Lizards option.
+        // TODO: crap i think etiquette is to provide own implementation of this if the user does not have
+        // the DLC. Fix this before the Coppers come!s
         IL.LizardAI.IUseARelationshipTracker_UpdateDynamicRelationship += (il) =>
         {
             try
@@ -574,6 +581,40 @@ class WavesGameSession : ArenaGameSession
             if (self.AI.creature.Room.world.game.session is WavesGameSession) return 0f;
             return orig(self);
         };
+
+        On.VultureAI.Update += (On.VultureAI.orig_Update orig, VultureAI self) =>
+        {
+            Debug.Log(self.behavior);
+            orig(self);
+        };
+
+        On.AbstractCreature.WantToStayInDenUntilEndOfCycle += (On.AbstractCreature.orig_WantToStayInDenUntilEndOfCycle orig, AbstractCreature self) =>
+        {
+            if (self.world.game.session is WavesGameSession) return orig(self);
+            return false;
+        };
+
+        // IL.VultureAI.Update += (il) =>
+        // {
+        //     try
+        //     {
+        //         var cursor = new ILCursor(il);
+
+        //         cursor.GotoNext(MoveType.Before,
+        //             x => x.MatchLdarg(0),
+        //             x => x.MatchLdsfld(typeof(VultureAI.Behavior).GetField("Disencouraged", BindingFlags.Public | BindingFlags.Static)),
+        //             x => x.MatchStfld(typeof(VultureAI).GetField("behavior"))
+        //         );
+
+        //         cursor.EmitDelegate(() => {
+        //             Debug.Log("set disencouraged!!! no!!");
+        //         });
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         WavesMod.Instance.logger.LogError("IL.VultureAI.Update failed! " + e);
+        //     }
+        // };
 
         // flies turn into spears when grabbed
         On.Fly.Update += (On.Fly.orig_Update orig, Fly self, bool eu) =>
