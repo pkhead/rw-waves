@@ -115,6 +115,11 @@ Task("Build")
     CleanDirectory("./out");
     CopyDirectory("./assets", "./out");
     CreateDirectory("./out/plugins");
+
+    if (OperatingSystem.IsMacOS())
+    {
+        DeleteFile("./out/.DS_Store");
+    }
     
     CopyFile($"./plugin/bin/{configuration}/net48/{ProjectName}.dll", $"./out/plugins/{ProjectName}.dll");
     CopyFile($"./plugin/bin/{configuration}/net48/{ProjectName}.pdb", $"./out/plugins/{ProjectName}.pdb");
