@@ -87,7 +87,7 @@ class WavesCreatureSpawner
     /// Update the WavesCreatureSpawner.
     /// </summary>
     /// <returns>True if the creature spawner is finished, false if not.</returns>
-    public bool Update()
+    public bool Update(WavesGameSession session)
     {
         while (creatureQueue.Count > 0)
         {
@@ -101,7 +101,7 @@ class WavesCreatureSpawner
                 bool isDenOccupied = false;
 
                 // check if a creature is in this den
-                foreach (var creature in room.entitiesInDens)
+                foreach (var creature in session.trackedCreatures)
                 {
                     if (creature.pos.abstractNode == den)
                     {

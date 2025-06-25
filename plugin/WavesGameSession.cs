@@ -13,7 +13,7 @@ using Random = UnityEngine.Random;
 class WavesGameSession : ArenaGameSession
 {
     // if all tracked creatures are dead, initiate the next wave
-    private readonly List<AbstractCreature> trackedCreatures;
+    public readonly List<AbstractCreature> trackedCreatures;
     private readonly HashSet<AbstractCreature> permaDeadPlayers;
     private WavesCreatureSpawner creatureSpawner = null;
     private readonly List<(HUD.PlayerSpecificMultiplayerHud hud, AbstractCreature newCreature)> stalePlayerHuds = new();
@@ -394,7 +394,7 @@ class WavesGameSession : ArenaGameSession
         if (game.paused) return;
         if (gracePeriodTicker > 0) gracePeriodTicker--;
 
-        if (creatureSpawner is not null && creatureSpawner.Update())
+        if (creatureSpawner is not null && creatureSpawner.Update(this))
             creatureSpawner = null;
         
         // update stale player huds
