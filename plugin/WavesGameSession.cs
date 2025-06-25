@@ -245,16 +245,27 @@ class WavesGameSession : ArenaGameSession
         int creaturesRemaining = Random.Range(spawnData.minCreatures, spawnData.maxCreatures+1);
         List<CreatureSpawnData> spawnList = new();
 
-        static CreatureSpawnData CreateSpawnData(WaveSpawnData.WaveSpawn jsonData)
+        static bool CreateSpawnData(WaveSpawnData.WaveSpawn jsonData, out CreatureSpawnData spawn)
         {
+            if (jsonData.template.index == -1)
+            {
+                spawn = new CreatureSpawnData(null, null);
+                var str = $"unknown creature template type {jsonData.template.value}!";
+                Debug.LogWarning(str);
+                WavesMod.Instance.logger.LogWarning(str);
+                return false;
+            }
+            
             if (jsonData.IDs != null && jsonData.IDs.Length > 0)
             {
                 var idNum = jsonData.IDs[Random.Range(0, jsonData.IDs.Length)];
-                return new CreatureSpawnData(jsonData.template, new EntityID(-1, idNum));
+                spawn = new CreatureSpawnData(jsonData.template, new EntityID(-1, idNum));
+                return true;
             }
             else
             {
-                return new CreatureSpawnData(jsonData.template, null);
+                spawn = new CreatureSpawnData(jsonData.template, null);
+                return true;
             }
         }
 
@@ -272,9 +283,12 @@ class WavesGameSession : ArenaGameSession
             if (WavesCreatureSpawner.IsSkyCreature(spawnData.spawns[i].template) && !hasSkyExit)
                 continue;
             
-            if (!spawnData.spawns[i].modifier.HasFlag(WaveSpawnData.SpawnModifiers.RandomSpawn))
+            if (spawnData.spawns[i].modifier.HasFlag(WaveSpawnData.SpawnModifiers.RandomSpawn))
+                continue;
+
+            if (CreateSpawnData(spawnData.spawns[i], out var spawn))
             {
-                spawnList.Add(CreateSpawnData(spawnData.spawns[i]));
+                spawnList.Add(spawn);
                 creaturesRemaining--;
             }
         }
@@ -293,8 +307,13 @@ class WavesGameSession : ArenaGameSession
             if (WavesCreatureSpawner.IsSkyCreature(spawnData.spawns[i].template) && !hasSkyExit)
                 continue;
             
-            if (spawnData.spawns[i].modifier.HasFlag(WaveSpawnData.SpawnModifiers.RandomSpawn))
-                randomSpawns.Add(CreateSpawnData(spawnData.spawns[i]));
+            if (!spawnData.spawns[i].modifier.HasFlag(WaveSpawnData.SpawnModifiers.RandomSpawn))
+                continue;
+
+            if (CreateSpawnData(spawnData.spawns[i], out var spawn))
+            {
+                randomSpawns.Add(spawn);
+            }
         }
 
         // if no creatures were tagged with RandomSpawn, then just randomly select
@@ -303,7 +322,8 @@ class WavesGameSession : ArenaGameSession
         {
             for (int i = 0; i < spawnData.spawns.Length; i++)
             {
-                randomSpawns.Add(CreateSpawnData(spawnData.spawns[i]));
+                if (CreateSpawnData(spawnData.spawns[i], out var spawn))
+                    randomSpawns.Add(spawn);
             }   
         }
 

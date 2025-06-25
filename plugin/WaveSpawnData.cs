@@ -52,22 +52,7 @@ class WaveSpawnData
         public string Type {
             set
             {
-                template = (CreatureTemplate.Type) (typeof(CreatureTemplate.Type).GetField(value)?.GetValue(null));
-
-                if (template is null && ModManager.DLCShared)
-                    template = (CreatureTemplate.Type) (typeof(DLCSharedEnums.CreatureTemplateType).GetField(value)?.GetValue(null));
-
-                if (template is null && ModManager.Watcher)
-                    template = (CreatureTemplate.Type) (typeof(Watcher.WatcherEnums.CreatureTemplateType).GetField(value)?.GetValue(null));
-
-                if (template is null && ModManager.MSC)
-                    template = (CreatureTemplate.Type) (typeof(MoreSlugcats.MoreSlugcatsEnums.CreatureTemplateType).GetField(value)?.GetValue(null));
-                
-                if (template is null)
-                    throw new ArgumentException("Unknown template type " + value, nameof(value));
-                
-                WavesMod.Instance.logger.LogInfo(value);
-                WavesMod.Instance.logger.LogInfo(template);
+                template = new CreatureTemplate.Type(value, false);
             }
         }
 
