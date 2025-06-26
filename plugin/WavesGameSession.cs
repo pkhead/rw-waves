@@ -572,36 +572,68 @@ class WavesGameSession : ArenaGameSession
         };
 
         // make it so lizards are friendly to every player if they are tamed.
-        // this enables that code path normally only enabled by the jolly co-op Friendly Lizards option.
-        // TODO: crap i think etiquette is to provide own implementation of this if the user does not have
-        // the DLC. Fix this before the Coppers come!s
         IL.LizardAI.IUseARelationshipTracker_UpdateDynamicRelationship += (il) =>
         {
             try
             {
                 var cursor = new ILCursor(il);
 
-                // source:  if (ModManager.CoopAvailable && Custom.rainWorld.options.friendlyLizards)
                 // desired: if (this.creature.Room.world.game.session is WavesGameSession || (Custom.rainWorldModManager.CoopAvailable && Custom.rainWorld.options.friendlyLizards))
-                var branchLabel = cursor.DefineLabel();
+                // var branchLabel = cursor.DefineLabel();
 
+                ILLabel ba = null;
+                ILLabel bb = null;
+
+                /*
+                source:
+                    if (ModManager.CoopAvailable && Custom.rainWorld.options.friendlyLizards)
+                    {
+                        [friendly lizards code]
+                    }
+                
+                desired:
+                    if (<is waves game session>)
+                    {
+                        [copy of friendly lizards code]
+                    }
+                    else if (ModManager.CoopAvailable && Custom.rainWorld.options.friendlyLizards)
+                    {
+                        [friendly lizards code]
+                    }
+                */
                 cursor.GotoNext(MoveType.Before,
                     x => x.MatchLdsfld(typeof(ModManager).GetField("CoopAvailable", BindingFlags.Public | BindingFlags.Static)),
-                    x => x.MatchBrfalse(out _),
+                    x => x.MatchBrfalse(out ba),
                     x => x.MatchLdsfld(typeof(RWCustom.Custom).GetField("rainWorld", BindingFlags.Public | BindingFlags.Static)),
                     x => x.MatchLdfld(typeof(RainWorld).GetField("options")),
                     x => x.MatchLdfld(typeof(Options).GetField("friendlyLizards")),
-                    x => x.MatchBrfalse(out _)
+                    x => x.MatchBrfalse(out bb)
                 );
 
-                cursor.Emit(OpCodes.Ldarg_0);
-                cursor.EmitDelegate((LizardAI self) =>
+                if ((ba is null && bb is null) || ba.Target.Offset != bb.Target.Offset)
                 {
-                    return self.creature.Room.world.game.session is WavesGameSession;
+                    throw new Exception("why is the code for the coop + friendly lizards check weird?");
+                }
+
+                // var branchLabel = cursor.DefineLabel();
+                cursor.Emit(OpCodes.Ldarg_0);
+                cursor.Emit(OpCodes.Ldloca_S, (byte)1);
+                cursor.EmitDelegate((LizardAI self, ref float like) =>
+                {
+                    if (self.lizard.room.world.game.session is WavesGameSession)
+                    {
+                        foreach (AbstractCreature nonPermaDeadPlayer in self.lizard.abstractCreature.world.game.NonPermaDeadPlayers)
+                        {
+                            var player = self.tracker.RepresentationForCreature(nonPermaDeadPlayer, addIfMissing: false);
+                            like = Mathf.Max(self.LikeOfPlayer(player), like);
+                        }
+
+                        return true;
+                    }
+
+                    return false;
                 });
-                cursor.Emit(OpCodes.Brtrue, branchLabel);
-                cursor.Index += 6;
-                cursor.MarkLabel(branchLabel);
+                cursor.Emit(OpCodes.Brtrue, ba);
             }
             catch (Exception e)
             {
