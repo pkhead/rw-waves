@@ -104,7 +104,9 @@
         "amount": 2,
         "spawns": [ 
             { "type": "Vulture" },
-            { "type": "Vulture" }
+            { "type": "Vulture" },
+            { "type": "Centipede", "ids": [32994, 12553, 67536], "modifiers": ["NoSkyExit"] },
+            { "type": "Centipede", "ids": [81953, 56677, 19423], "modifiers": ["NoSkyExit"] }
         ]
     },
 
@@ -126,10 +128,10 @@
     {
         "amount": 5,
         "spawns": [ 
-            { "type": "Centipede" },
-            { "type": "Centipede" },
-            { "type": "Centipede" },
-            { "type": "Centipede" },
+            { "type": "Centipede", "ids": [8516, 8521, 8522, 8528, 8525, 8533, 8532, 8530, 8539, 8537, 8538, 8539, 8542, 8542, 8544, 8541] },
+            { "type": "Centipede", "ids": [8516, 8521, 8522, 8528, 8525, 8533, 8532, 8530, 8539, 8537, 8538, 8539, 8542, 8542, 8544, 8541] },
+            { "type": "Centipede", "ids": [8516, 8521, 8522, 8528, 8525, 8533, 8532, 8530, 8539, 8537, 8538, 8539, 8542, 8542, 8544, 8541] },
+            { "type": "Centipede", "ids": [8516] },
             { "type": "Vulture" }
         ]
     },
@@ -201,8 +203,8 @@
             { "type": "YellowLizard" },
             { "type": "Vulture" },
             { "type": "Vulture" },
-            { "type": "Centipede", "modifiers": ["NoSkyExit"] },
-            { "type": "Centipede", "modifiers": ["NoSkyExit"] }
+            { "type": "Centipede", "ids": [32994, 12553, 67536], "modifiers": ["NoSkyExit"] },
+            { "type": "Centipede", "ids": [81953, 56677, 19423], "modifiers": ["NoSkyExit"] }
         ]
     },
 
