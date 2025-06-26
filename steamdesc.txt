@@ -1,0 +1,11 @@
+Adds a new game mode to Arena. Conquer never-ending waves of hungry creatures, each one more difficult than the last. You will need to kill every hostile creature in order to move on to the next wave. The game is over once every player has ran out of lives. Try to see how long you can last!
+
+This is based off the scrapped Waves game mode present in some alpha builds of Rain World.
+
+This mod also hooks into the [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2920528044]Dev Console[/url] mod! It adds these commands:
+[list]
+    [*] set_wave <wave_number>
+    [*] next_wave
+[/list]
+
+[url=https://github.com/pkhead/rw-waves]GitHub[/url] (contains documentation about the spawn data JSON format)

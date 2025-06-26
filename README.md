@@ -3,6 +3,8 @@ Adds a new game mode to Arena. Conquer never-ending waves of hungry creatures, e
 
 This is based off the scrapped Waves game mode present in some alpha builds of Rain World.
 
+[Steam workshop page](https://steamcommunity.com/sharedfiles/filedetails/?id=3505392871)
+
 ## Wave Spawn Data Format
 Wave spawn data is specified in a JSON format. Below is the format's specifications in a TypeScript-esque format:
 ```
