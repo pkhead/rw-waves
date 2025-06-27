@@ -1,3 +1,4 @@
+- initiate completion at the end of preset list
 - session saves friendly creatures and objects in room
 - make player lives number of current characters rather than available stock
   makes it so i don't have to add one for session saving I guess

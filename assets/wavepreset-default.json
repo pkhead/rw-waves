@@ -1,0 +1,273 @@
+{
+    "description": "Built-in preset: 21 waves of increasingly difficult vanilla creatures.",
+    "waves": [
+        // Wave 1
+        {
+            "amount": 1,
+            "spawns": [
+                { "type": "PinkLizard" }
+            ]
+        },
+
+        // Wave 2
+        {
+            "amount": 2,
+            "spawns": [ 
+                { "type": "PinkLizard" },
+                { "type": "PinkLizard" }
+            ]
+        },
+
+        // Wave 3
+        {
+            "amount": 3,
+            "spawns": [ 
+                { "type": "PinkLizard" },
+                { "type": "PinkLizard" },
+                { "type": "GreenLizard" }
+            ]
+        },
+
+        // Wave 4
+        {
+            "amount": 3,
+            "spawns": [
+                { "type": "PinkLizard" },
+                { "type": "BlueLizard" },
+                { "type": "GreenLizard" }
+            ]
+        },
+
+        // Wave 5
+        {
+            "min": 3,
+            "max": 4,
+            "spawns": [ 
+                { "type": "GreenLizard" },
+                { "type": "PinkLizard" },
+                { "type": "BlueLizard", "modifiers": ["RandomSpawn"] }
+            ]
+        },
+
+        // Wave 6
+        {
+            "min": 3,
+            "max": 4,
+            "spawns": [
+                { "type": "PinkLizard" },
+                { "type": "BlueLizard", "modifiers": ["RandomSpawn"]},
+                { "type": "BlueLizard", "modifiers": ["RandomSpawn"]},
+                { "type": "WhiteLizard", "modifiers": ["RandomSpawn"]}
+            ]
+        },
+
+        // Wave 7
+        {
+            "amount": 4,
+            "spawns": [ 
+                { "type": "YellowLizard" },
+                { "type": "YellowLizard" },
+                { "type": "YellowLizard" },
+                { "type": "YellowLizard" }
+            ]
+        },
+
+        // Wave 8
+        {
+            "amount": 3,
+            "spawns": [ 
+                { "type": "YellowLizard" },
+                { "type": "YellowLizard" },
+                { "type": "BlueLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "BlueLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "GreenLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "WhiteLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "GreenLizard", "modifiers": ["RandomSpawn"] }
+            ]
+        },
+
+        // Wave 9
+        {
+            "amount": 5,
+            "spawns": [ 
+                { "type": "YellowLizard" },
+                { "type": "YellowLizard" },
+                { "type": "Scavenger" },
+                { "type": "BlueLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "BlueLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "GreenLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "WhiteLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "GreenLizard", "modifiers": ["RandomSpawn"] }
+            ]
+        },
+
+        // Wave 10
+        {
+            "amount": 2,
+            "spawns": [ 
+                { "type": "Vulture" },
+                { "type": "Vulture" },
+                { "type": "Centipede", "ids": [32994, 12553, 67536], "modifiers": ["NoSkyExit"] },
+                { "type": "Centipede", "ids": [81953, 56677, 19423], "modifiers": ["NoSkyExit"] }
+            ]
+        },
+
+        // Wave 11
+        {
+            "amount": 5,
+            "spawns": [ 
+                { "type": "CyanLizard" },
+                { "type": "CyanLizard" },
+                { "type": "Scavenger" },
+                { "type": "BlueLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "YellowLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "WhiteLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "GreenLizard", "modifiers": ["RandomSpawn"] }
+            ]
+        },
+
+        // Wave 12
+        {
+            "amount": 5,
+            "spawns": [ 
+                { "type": "Centipede", "ids": [8516, 8521, 8522, 8528, 8525, 8533, 8532, 8530, 8539, 8537, 8538, 8539, 8542, 8542, 8544, 8541] },
+                { "type": "Centipede", "ids": [8516, 8521, 8522, 8528, 8525, 8533, 8532, 8530, 8539, 8537, 8538, 8539, 8542, 8542, 8544, 8541] },
+                { "type": "Centipede", "ids": [8516, 8521, 8522, 8528, 8525, 8533, 8532, 8530, 8539, 8537, 8538, 8539, 8542, 8542, 8544, 8541] },
+                { "type": "Centipede", "ids": [8516] },
+                { "type": "Vulture" }
+            ]
+        },
+
+        // Wave 13
+        {
+            "amount": 6,
+            "spawns": [ 
+                { "type": "Scavenger" },
+                { "type": "Scavenger" },
+                { "type": "Scavenger" }
+            ]
+        },
+
+        // Wave 14
+        {
+            "amount": 5,
+            "spawns": [ 
+                { "type": "Scavenger" },
+                { "type": "Scavenger" },
+                { "type": "Scavenger" },
+                { "type": "Scavenger" },
+                { "type": "Vulture" }
+            ]
+        },
+
+        // Wave 15
+        {
+            "amount": 6,
+            "spawns": [ 
+                { "type": "Scavenger" },
+                { "type": "CyanLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "WhiteLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "BlueLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "Vulture", "modifiers": ["RandomSpawn"] }
+            ]
+        },
+
+        // Wave 16
+        {
+            "amount": 6,
+            "spawns": [ 
+                { "type": "Scavenger" },
+                { "type": "CyanLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "WhiteLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "BlueLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "Vulture", "modifiers": ["RandomSpawn"] }
+            ]
+        },
+
+        // Wave 17
+        {
+            "amount": 7,
+            "spawns": [ 
+                { "type": "Scavenger" },
+                { "type": "Scavenger" },
+                { "type": "Scavenger" },
+                { "type": "Scavenger" },
+                { "type": "Scavenger" }
+            ]
+        },
+
+        // Wave 18
+        {
+            "amount": 5,
+            "spawns": [ 
+                { "type": "YellowLizard" },
+                { "type": "YellowLizard" },
+                { "type": "YellowLizard" },
+                { "type": "Vulture" },
+                { "type": "Vulture" },
+                { "type": "Centipede", "ids": [32994, 12553, 67536], "modifiers": ["NoSkyExit"] },
+                { "type": "Centipede", "ids": [81953, 56677, 19423], "modifiers": ["NoSkyExit"] }
+            ]
+        },
+
+        // Wave 19
+        {
+            "amount": 3,
+            "spawns": [ 
+                { "type": "KingVulture" },
+                { "type": "RedCentipede", "modifiers": ["NoSkyExit"] },
+                { "type": "Scavenger" },
+                { "type": "Scavenger" }
+            ]
+        },
+
+        // wave 20
+        {
+            "amount": 6,
+            "spawns": [ 
+                { "type": "YellowLizard" },
+                { "type": "YellowLizard" },
+                { "type": "YellowLizard" },
+                { "type": "YellowLizard" },
+                { "type": "YellowLizard" },
+                { "type": "YellowLizard" }
+            ]
+        },
+
+        // wave 21 (imposibble!!!)
+        {
+            "amount": 1,
+            "spawns": [ 
+                { "type": "RedLizard" }
+            ]
+        },
+
+        // Endless Mode...
+        {
+            "min": 5,
+            "max": 8,
+            "spawns": [ 
+                { "type": "PinkLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "GreenLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "BlueLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "WhiteLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "CyanLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "YellowLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "Vulture", "modifiers": ["RandomSpawn"] },
+
+                // duplicated twice to make the king vulture spawn rarer, lel...
+                { "type": "PinkLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "GreenLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "BlueLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "WhiteLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "CyanLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "YellowLizard", "modifiers": ["RandomSpawn"] },
+                { "type": "Vulture", "modifiers": ["RandomSpawn"] },
+
+                { "type": "KingVulture", "modifiers": ["RandomSpawn"] },
+                { "type": "RedCentipede", "modifiers": ["RandomSpawn"] },
+                { "type": "RedLizard", "modifiers": ["RandomSpawn"] }
+            ]
+        }
+    ]
+}

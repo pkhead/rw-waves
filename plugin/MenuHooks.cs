@@ -43,8 +43,14 @@ static class MenuHooks
         {}
     }
 
+    class MultiplayerMenuExtras
+    {
+        public SpawnSettingsInterface spawnSettingsInterface;
+    }
+
     private static readonly ConditionalWeakTable<ArenaSetup.GameTypeSetup, GameTypeSetupExtras> gameTypeSetupCwt = new();
     private static readonly ConditionalWeakTable<ArenaSettingsInterface, ArenaSettingsInterfaceExtras> arenaSettingsInterfaceCwt = new();
+    private static readonly ConditionalWeakTable<MultiplayerMenu, MultiplayerMenuExtras> multiplayerMenuExtras = new();
 
     public static GameTypeSetupExtras GetExtraSetupOptions(ArenaSetup.GameTypeSetup setup)
     {
@@ -157,18 +163,50 @@ static class MenuHooks
                 cursor.Emit(OpCodes.Ldarg_0);
                 cursor.EmitDelegate((MultiplayerMenu self) =>
                 {
-                    // add waves mode title
                     if (self.currentGameType != ArenaGameTypeID.Waves) return;
 
+                    // add waves mode title
                     self.scene.AddIllustration(new MenuIllustration(self, self.scene, "", "wavesshadow", new Vector2(-2.99f, 265.01f), true, false));
                     self.scene.AddIllustration(new MenuIllustration(self, self.scene, "", "wavestitle", new Vector2(-2.99f, 265.01f), true, false));
                     self.scene.flatIllustrations[self.scene.flatIllustrations.Count - 1].sprite.shader = self.manager.rainWorld.Shaders["MenuText"];
+
+                    // add spawn settings interface
+                    var extras = multiplayerMenuExtras.GetOrCreateValue(self);
+                    extras.spawnSettingsInterface = new SpawnSettingsInterface(self, self.pages[0]);
+                    self.pages[0].subObjects.Add(extras.spawnSettingsInterface);
                 });
             }
             catch (Exception e)
             {
                 WavesMod.Instance.logger.LogError("IL.Menu.MultiplayerMenu.InitiateGameTypeSpecificButtons failed!: " + e);
             }
+        };
+
+        On.Menu.MultiplayerMenu.ClearGameTypeSpecificButtons += (On.Menu.MultiplayerMenu.orig_ClearGameTypeSpecificButtons orig, MultiplayerMenu self) =>
+        {
+            if (multiplayerMenuExtras.TryGetValue(self, out var extras))
+            {
+                var uiInterface = extras.spawnSettingsInterface;
+                if (uiInterface is not null)
+                {
+                    uiInterface.Shutdown();
+                    uiInterface.RemoveSprites();
+                    self.pages[0].RemoveSubObject(uiInterface);
+                    extras.spawnSettingsInterface = null;
+                }
+            }
+
+            orig(self);
+        };
+
+        On.Menu.MultiplayerMenu.ShutDownProcess += (On.Menu.MultiplayerMenu.orig_ShutDownProcess orig, MultiplayerMenu self) =>
+        {
+            if (multiplayerMenuExtras.TryGetValue(self, out var extras))
+            {
+                extras.spawnSettingsInterface?.Shutdown();
+            }
+
+            orig(self);
         };
         
         IL.Menu.MultiplayerMenu.Update += (il) =>

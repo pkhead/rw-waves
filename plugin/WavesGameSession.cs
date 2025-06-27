@@ -29,7 +29,7 @@ class WavesGameSession : ArenaGameSession
 
     public WavesGameSession(RainWorldGame game) : base(game)
     {
-        waveData = WaveSpawnData.Read();
+        waveData = WaveSpawnData.Read().Waves;
 
         rainCycleTimeInMinutes = 0;
         trackedCreatures = new();

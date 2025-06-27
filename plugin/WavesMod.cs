@@ -44,6 +44,7 @@ namespace WavesMod
                     isInit = true;
 
                     SpriteTinter.Reset();
+                    WaveSpawnData.InitPresetDirectory();
                     InitHooks();
 
                     try

@@ -7,27 +7,58 @@ namespace WavesMod;
 
 class WaveSpawnData
 {
-    public static WaveData[] Read()
-    {
-        Debug.Log("CALL READ!!!");
-        
-        var jsonFile = AssetManager.ResolveFilePath("wavedata/default.json");
-        using var stream = File.OpenText(jsonFile);
-        var data = CompactJson.Serializer.Parse<WaveData[]>(stream);
+    public static string ConfigDirectory = Path.Combine(Application.persistentDataPath, "ModConfigs", "pkhead.waves");
+    public static string PresetDirectory = Path.Combine(ConfigDirectory, "presets");
+    static readonly string SelectedPresetFile = Path.Combine(ConfigDirectory, "selected_preset");
 
-        foreach (var spawn in data[0].spawns)
+    public const string DefaultPresetName = "Default";
+    
+    private static string _selectedPreset = "Default";
+    public static string SelectedPreset {
+        get => _selectedPreset;
+        set
         {
-            Debug.Log(spawn.template);
-            if (spawn.IDs != null)
-            {
-                foreach (var i in spawn.IDs)
-                    Debug.Log("potential id: " + i);
-            }
-            else
-            {
-                Debug.Log("creature had no IDs");
-            }
+            if (value == _selectedPreset) return;
+
+            _selectedPreset = value;
+            File.WriteAllText(SelectedPresetFile, _selectedPreset);
         }
+    }
+
+    public static void InitPresetDirectory()
+    {
+        if (File.Exists(SelectedPresetFile))
+        {
+            _selectedPreset = File.ReadAllText(SelectedPresetFile);
+        }
+        Directory.CreateDirectory(PresetDirectory);
+
+        var defaultPresetLoc = Path.Combine(PresetDirectory, DefaultPresetName + ".json");
+        var srcFile = AssetManager.ResolveFilePath("wavepreset-default.json");
+        File.WriteAllText(defaultPresetLoc, File.ReadAllText(srcFile));
+
+        WavesMod.Instance.logger.LogInfo("Preset directory: " + PresetDirectory);
+    }
+
+    public static WavesPreset Read()
+    {
+        var jsonFile = Path.Combine(PresetDirectory, SelectedPreset + ".json");
+        using var stream = File.OpenText(jsonFile);
+        var data = CompactJson.Serializer.Parse<WavesPreset>(stream);
+
+        // foreach (var spawn in data[0].spawns)
+        // {
+        //     Debug.Log(spawn.template);
+        //     if (spawn.IDs != null)
+        //     {
+        //         foreach (var i in spawn.IDs)
+        //             Debug.Log("potential id: " + i);
+        //     }
+        //     else
+        //     {
+        //         Debug.Log("creature had no IDs");
+        //     }
+        // }
 
         return data;
     }
@@ -103,5 +134,14 @@ class WaveSpawnData
             get => maxCreatures;
             set => maxCreatures = value;
         }
+    }
+
+    public class WavesPreset
+    {
+        [JsonProperty("description")]
+
+        public string Description;
+        [JsonProperty("waves")]
+        public WaveData[] Waves;
     }
 }
