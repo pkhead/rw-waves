@@ -40,6 +40,8 @@ with the lowest probability weight has the lowest probability of being spawned. 
 an absolute value, and only has meaning relative to the probability weights of the other creatures. Additionally,
 these probability weights are not specified in a table per wave, but rather through parameters to a continuous function.
 
+This generation algorithm was designed by both me and @a1iex (on Discord).
+
 ## JSON format
 ```
 root: Spawn[]
