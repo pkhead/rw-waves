@@ -3,35 +3,8 @@ Adds a new game mode to Arena. Conquer never-ending waves of hungry creatures, e
 
 This is based off the scrapped Waves game mode present in some alpha builds of Rain World.
 
-[Steam workshop page](https://steamcommunity.com/sharedfiles/filedetails/?id=3505392871)
-
-## Wave Spawn Data Format
-Wave spawn data is specified in a JSON format. Below is the format's specifications in a TypeScript-esque format:
-```
-root: WaveData[]            data for each wave.
-
-type WaveData = {
-    min?: int               minimum number of creatures that will spawn. required if "amount" is not used.
-    max?: int               maximum number of creatures that will spawn. required if "amount" is not used.
-    amount?: int            sets min and max to this value. do not use this with min & max.
-    spawns: WaveSpawn[]     list of creatures to spawn.
-}
-
-type WaveSpawn = {
-    type: string            name of the creature template. ex: PinkLizard, GreenLizard, Scavenger
-    ids?: int[]             list of IDs to randomly choose from.
-    modifiers?: string[]    list of spawn modifiers to apply. there are currently only two:
-                                NoSkyExit:      spawn this creature if and only if there are no sky exits in the level.
-                                                note that creatures that require a sky exit (i.e. vultures) will not spawn
-                                                if the level has no sky exit, so this modifier is intended to be used for
-                                                substituting vultures in enclosed levels.
-
-                                RandomSpawn:    if a wave needs to spawn more creatures than the number of creatures in the
-                                                spawn list that do not have the RandomSpawn modifier, the remaining creatures
-                                                will be randomly picked from the collection of creatures that have this
-                                                modifier.
-}
-```
+- [Steam workshop page](https://steamcommunity.com/sharedfiles/filedetails/?id=3505392871)
+- [Configuration documentation](docs.md)
 
 ## Building
 This project will reference assemblies from the Rain World install directory as well as the Steam Workshop directories for its dependencies.
