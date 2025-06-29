@@ -17,7 +17,7 @@ class WavesGameSession : ArenaGameSession
     private readonly HashSet<AbstractCreature> permaDeadPlayers;
     private WavesCreatureSpawner creatureSpawner = null;
     private readonly List<(HUD.PlayerSpecificMultiplayerHud hud, AbstractCreature newCreature)> stalePlayerHuds = new();
-    private readonly WaveSpawnData.WaveData[] waveData;
+    private readonly IWaveGenerator waveGenerator;
 
     public int wave = -1;
     private int nextWaveTimer = -1;
@@ -29,7 +29,7 @@ class WavesGameSession : ArenaGameSession
 
     public WavesGameSession(RainWorldGame game) : base(game)
     {
-        waveData = WaveSpawnData.Read().Waves;
+        waveGenerator = new WaveRandomizerGenerator();
 
         rainCycleTimeInMinutes = 0;
         trackedCreatures = new();
@@ -240,100 +240,8 @@ class WavesGameSession : ArenaGameSession
         var abstractRoom = game.world.GetAbstractRoom(0);
         
         // spawn creatures
-        var spawnData = waveData[Math.Min(wave, waveData.Length - 1)];
-
-        int creaturesRemaining = Random.Range(spawnData.minCreatures, spawnData.maxCreatures+1);
-        List<CreatureSpawnData> spawnList = new();
-
-        static bool CreateSpawnData(WaveSpawnData.WaveSpawn jsonData, out CreatureSpawnData spawn)
-        {
-            if (jsonData.template.index == -1)
-            {
-                spawn = new CreatureSpawnData(null, null);
-                var str = $"unknown creature template type {jsonData.template.value}!";
-                Debug.LogWarning(str);
-                WavesMod.Instance.logger.LogWarning(str);
-                return false;
-            }
-            
-            if (jsonData.IDs != null && jsonData.IDs.Length > 0)
-            {
-                var idNum = jsonData.IDs[Random.Range(0, jsonData.IDs.Length)];
-                spawn = new CreatureSpawnData(jsonData.template, new EntityID(-1, idNum));
-                return true;
-            }
-            else
-            {
-                spawn = new CreatureSpawnData(jsonData.template, null);
-                return true;
-            }
-        }
-
-        // spawn creatures not tagged with Random first
-        bool hasSkyExit = abstractRoom.AnySkyAccess;
-        for (int i = 0; i < spawnData.spawns.Length; i++)
-        {
-            if (creaturesRemaining == 0) continue;
-
-            // NoSkyExit modifier
-            if (spawnData.spawns[i].modifier.HasFlag(WaveSpawnData.SpawnModifiers.NoSkyExit) && hasSkyExit)
-                continue;
-            
-            // don't spawn in sky creatures if there is no sky exit
-            if (WavesCreatureSpawner.IsSkyCreature(spawnData.spawns[i].template) && !hasSkyExit)
-                continue;
-            
-            if (spawnData.spawns[i].modifier.HasFlag(WaveSpawnData.SpawnModifiers.RandomSpawn))
-                continue;
-
-            if (CreateSpawnData(spawnData.spawns[i], out var spawn))
-            {
-                spawnList.Add(spawn);
-                creaturesRemaining--;
-            }
-        }
-
-        // then for the remainder of the creatures randomly choose a creature
-        // with the Random tag and spawn it
-        // first, collect a list of creatures tagged with RandomSpawn
-        List<CreatureSpawnData> randomSpawns = new();
-        for (int i = 0; i < spawnData.spawns.Length; i++)
-        {
-            // NoSkyExit modifier
-            if (spawnData.spawns[i].modifier.HasFlag(WaveSpawnData.SpawnModifiers.NoSkyExit) && hasSkyExit)
-                continue;
-
-            // don't spawn in sky creatures if there is no sky exit
-            if (WavesCreatureSpawner.IsSkyCreature(spawnData.spawns[i].template) && !hasSkyExit)
-                continue;
-            
-            if (!spawnData.spawns[i].modifier.HasFlag(WaveSpawnData.SpawnModifiers.RandomSpawn))
-                continue;
-
-            if (CreateSpawnData(spawnData.spawns[i], out var spawn))
-            {
-                randomSpawns.Add(spawn);
-            }
-        }
-
-        // if no creatures were tagged with RandomSpawn, then just randomly select
-        // all creatures
-        if (randomSpawns.Count == 0)
-        {
-            for (int i = 0; i < spawnData.spawns.Length; i++)
-            {
-                if (CreateSpawnData(spawnData.spawns[i], out var spawn))
-                    randomSpawns.Add(spawn);
-            }   
-        }
-
-        while (creaturesRemaining > 0)
-        {
-            spawnList.Add(randomSpawns[Random.Range(0, randomSpawns.Count)]);
-            creaturesRemaining--;
-        }
-        
-        creatureSpawner = new WavesCreatureSpawner(abstractRoom, spawnList.ToArray(), OnSpawn);
+        var spawnList = waveGenerator.GenerateWave(wave, abstractRoom.AnySkyAccess);
+        creatureSpawner = new WavesCreatureSpawner(abstractRoom, spawnList, OnSpawn);
 
         if (wave > 0)
             SaveSession(false);
