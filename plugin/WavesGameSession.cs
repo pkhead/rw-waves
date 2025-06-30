@@ -564,12 +564,6 @@ class WavesGameSession : ArenaGameSession
             return orig(self);
         };
 
-        On.VultureAI.Update += (On.VultureAI.orig_Update orig, VultureAI self) =>
-        {
-            Debug.Log(self.behavior);
-            orig(self);
-        };
-
         On.AbstractCreature.WantToStayInDenUntilEndOfCycle += (On.AbstractCreature.orig_WantToStayInDenUntilEndOfCycle orig, AbstractCreature self) =>
         {
             if (self.world.game.session is WavesGameSession) return orig(self);

@@ -77,7 +77,7 @@ class SpawnSettingsInterface : PositionedMenuObject, SelectOneButton.SelectOneBu
         );
         subObjects.Add(rect);
 
-        tabWrapper = new Menu.Remix.MenuTabWrapper(menu, this);
+        tabWrapper = new Menu.Remix.MenuTabWrapper(menu, owner);
         subObjects.Add(tabWrapper);
 
         scrollBox = new OpScrollBox(
