@@ -1,3 +1,5 @@
+require("table.clear")
+
 local CreatureSymbol = require("creature_symbol")
 
 local Graph = {}
@@ -28,6 +30,9 @@ function Graph.new(w, h, data)
     self.scale_x = 40
     self.scale_y = self.height - 20
 
+    self.active_index = nil
+    self._points_tbl = {}
+
     return self
 end
 
@@ -41,12 +46,17 @@ function Graph:resize(w, h)
 end
 
 function Graph:update(dt)
+    local pan_speed = 6
+    if love.keyboard.isDown("lshift", "rshift") then
+        pan_speed = 24
+    end
+
     if love.keyboard.isDown("right") then
-        self.view_x = self.view_x + 4 * dt
+        self.view_x = self.view_x + pan_speed * dt
     end
 
     if love.keyboard.isDown("left") then
-        self.view_x = self.view_x - 4 * dt
+        self.view_x = self.view_x - pan_speed * dt
     end
 
     if self.view_x < 0 then
@@ -73,30 +83,32 @@ function Graph:draw()
         love.graphics.line(draw_x, 0, draw_x, self.height - 20)
     end
 
-    for _, spawn_data in ipairs(self.data) do
+    for i, spawn_data in ipairs(self.data) do
         local creature_name = spawn_data.creature
         if not creature_name then
             creature_name = spawn_data.creatures[1]
         end
 
         local cr, cg, cb = CreatureSymbol.get_creature_color(creature_name)
-        love.graphics.setColor(cr, cg, cb)
+        love.graphics.setColor(cr, cg, cb, i == self.active_index and 1 or 0.3)
 
-        local last_x = view_l
-        local last_y = nil
-
+        local pts = self._points_tbl
+        table.clear(pts)
         for x=view_l, view_r, 0.1 do
             local y = 1 - calc_probability_weight(spawn_data, x)
-            if last_y then
-                love.graphics.line(
-                    (last_x - self.view_x) * self.scale_x, (last_y - self.view_y) * self.scale_y,
-                    (x - self.view_x) * self.scale_x, (y - self.view_y) * self.scale_y
-                )
-            end
+            pts[#pts+1] = (x - self.view_x) * self.scale_x
+            pts[#pts+1] = (y - self.view_y) * self.scale_y
+            -- if last_y then
+            --     love.graphics.line(
+            --         (last_x - self.view_x) * self.scale_x, (last_y - self.view_y) * self.scale_y,
+            --         (x - self.view_x) * self.scale_x, (y - self.view_y) * self.scale_y
+            --     )
+            -- end
 
-            last_x = x
-            last_y = y
+            -- last_x = x
+            -- last_y = y
         end
+        love.graphics.line(pts)
     end
 
     love.graphics.setColor(1, 1, 1)

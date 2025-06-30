@@ -1,0 +1,171 @@
+[
+
+    {
+        "creature": "BlueLizard",
+        "points": 1,
+        "max": 6,
+        
+        "curveStart": 0,
+        "startWeight": 0.74000000953674,
+        "curvePeak": 9.3400001525879,
+        "peakWeight": 0.079999998211861,
+        "curveEnd": 9.3400001525879,
+        "endWeight": 0.079999998211861
+    },
+    {
+        "creature": "PinkLizard",
+        "points": 2,
+        "max": 6,
+        
+        "curveStart": 0.63999998569489,
+        "startWeight": 0,
+        "curvePeak": 1.960000038147,
+        "peakWeight": 0.93999999761581,
+        "curveEnd": 8,
+        "endWeight": 0.21999999880791
+    },
+    {
+        "creature": "GreenLizard",
+        "points": 3,
+        "max": 2,
+        
+        "curveStart": 0,
+        "startWeight": 0,
+        "curvePeak": 3.0599999427795,
+        "peakWeight": 0.66000002622604,
+        "curveEnd": 5.7399997711182,
+        "endWeight": 0.14000000059605
+    },
+    {
+        "creature": "WhiteLizard",
+        "points": 4,
+        "max": 3,
+        
+        "curveStart": 3.0599999427795,
+        "startWeight": 0,
+        "curvePeak": 5.1799998283386,
+        "peakWeight": 0.56000000238419,
+        "curveEnd": 8,
+        "endWeight": 0.18000000715256
+    },
+    {
+        "creatures": ["YellowLizard", "YellowLizard", "YellowLizard"],
+        "points": 5,
+        "max": 3,
+        
+        "curveStart": 3,
+        "startWeight": 0,
+        "curvePeak": 8.039999961853,
+        "peakWeight": 0.40000000596046,
+        "curveEnd": 11.739999771118,
+        "endWeight": 0.15999999642372
+    },
+    {
+        "creature": "RedLizard",
+        "points": 10,
+        "max": 1,
+        
+        "curveStart": 24.219999313354,
+        "startWeight": 0,
+        "curvePeak": 24.840000152588,
+        "peakWeight": 0.20000000298023,
+        "curveEnd": 25.979999542236,
+        "endWeight": 0.059999998658895
+    },
+    {
+        "creature": "Vulture",
+        "points": 6,
+        "max": 2,
+        
+        "curveStart": 3,
+        "startWeight": 0,
+        "curvePeak": 16.840000152588,
+        "peakWeight": 0.11999999731779,
+        "curveEnd": 16.840000152588,
+        "endWeight": 0.11999999731779
+    },
+    {
+        "creature": "DropBug",
+        "points": 3,
+        "max": 4,
+        
+        "curveStart": 3,
+        "startWeight": 0,
+        "curvePeak": 13.079999923706,
+        "peakWeight": 0.10000000149012,
+        "curveEnd": 13.079999923706,
+        "endWeight": 0.10000000149012
+    },
+    {
+        "creature": "KingVulture",
+        "points": 10,
+        "max": 2,
+        
+        "curveStart": 18.059999465942,
+        "startWeight": 0,
+        "curvePeak": 19.879999160767,
+        "peakWeight": 0.72000002861023,
+        "curveEnd": 23.5,
+        "endWeight": 0.079999998211861
+    },
+    {
+        "creature": "CyanLizard",
+        "points": 6,
+        "max": 3,
+        
+        "curveStart": 3.1199998855591,
+        "startWeight": 0,
+        "curvePeak": 17.920000076294,
+        "peakWeight": 0.10000000149012,
+        "curveEnd": 17.920000076294,
+        "endWeight": 0.10000000149012
+    },
+    {
+        "creatures": ["Scavenger", "Scavenger"],
+        "points": 5,
+        "max": 3,
+        
+        "curveStart": 12.079999923706,
+        "startWeight": 0.019999999552965,
+        "curvePeak": 16.139999389648,
+        "peakWeight": 0.28000000119209,
+        "curveEnd": 19.739999771118,
+        "endWeight": 0.10000000149012
+    },
+    {
+        "creature": "Centiwing",
+        "points": 3,
+        "max": 4,
+        
+        "curveStart": 3,
+        "startWeight": 0,
+        "curvePeak": 6.5599999427795,
+        "peakWeight": 0.43999999761581,
+        "curveEnd": 11.220000267029,
+        "endWeight": 0.15999999642372
+    },
+    {
+        "creature": "SpitLizard",
+        "points": 5,
+        "max": 2,
+        
+        "curveStart": 3,
+        "startWeight": 0,
+        "curvePeak": 14,
+        "peakWeight": 0.079999998211861,
+        "curveEnd": 14,
+        "endWeight": 0.079999998211861
+    },
+    {
+        "creature": "ZoopLizard",
+        "points": 2,
+        "max": 6,
+        
+        "curveStart": 1.9800000190735,
+        "startWeight": 0,
+        "curvePeak": 7.0999999046326,
+        "peakWeight": 0.5799999833107,
+        "curveEnd": 11.380000114441,
+        "endWeight": 0.079999998211861
+    }
+]

@@ -2,7 +2,7 @@ love.graphics.setDefaultFilter("nearest")
 
 -- setup cpath
 local extension = jit.os == "Windows" and "dll" or jit.os == "Linux" and "so" or jit.os == "OSX" and "dylib"
-package.cpath = string.format("%s;./?.%s", package.cpath, extension)
+package.cpath = string.format("%s;randvis/?.%s", package.cpath, extension)
 print(package.cpath)
 
 local imgui = require("cimgui")
@@ -11,6 +11,8 @@ local Sprite = require("sprite")
 local CreatureSymbol = require("creature_symbol")
 local ffi = require("ffi")
 local Graph = require("graph")
+
+local tmp_bool = ffi.new("bool[1]")
 local tmp_int = ffi.new("int[1]", 0)
 local tmp_float2 = ffi.new("float[2]", 0)
 local tmp_str_len = 128
@@ -38,26 +40,7 @@ function love.load(args)
         data = JSON.decode(file_data)
     else
         is_new = true
-        data = {
-            {
-                -- creature = "CicadaA",
-                creatures = {
-                    "PinkLizard",
-                },
-
-                points = 1,
-                max = 4,
-    
-                startWeight = 0,
-                curveStart = 3,
-    
-                peakWeight = 1,
-                curvePeak = 4,
-    
-                endWeight = 0.5,
-                curveEnd = 8
-            }
-        }
+        data = {}
     end
 
     for _, spawn in ipairs(data) do
@@ -65,6 +48,8 @@ function love.load(args)
             spawn.creatures = {spawn.creature}
             spawn.creature = nil
         end
+
+        spawn._two_point_mode = spawn.curvePeak == spawn.curveEnd and spawn.peakWeight == spawn.endWeight
     end
 
     graph = Graph.new(400, 300, data)
@@ -104,15 +89,15 @@ local function save_file()
         if #spawn.creatures == 1 then
             append("        \"creature\": \"", spawn.creatures[1], "\",\n")
         else
-            append("        \"creatures\": {")
+            append("        \"creatures\": [")
             for j, name in ipairs(spawn.creatures) do
                 if j > 1 then
                     append(", ")
                 end
 
-                append(name)
+                append("\"", name, "\"")
             end
-            append("},\n")
+            append("],\n")
         end
 
         append("        \"points\": ", spawn.points, ",\n")
@@ -160,6 +145,7 @@ function love.draw()
 
         local avail = imgui.GetContentRegionAvail()
         graph:resize(avail.x, 300)
+        graph.active_index = selected_creature_idx
         graph:draw()
         imgui.Image(graph.canvas, imgui.ImVec2_Float(graph.canvas:getDimensions()))
 
@@ -202,7 +188,9 @@ function love.draw()
                 curvePeak = 4,
     
                 endWeight = 0.5,
-                curveEnd = 8
+                curveEnd = 8,
+
+                _two_point_mode = false
             })
 
             selected_creature_idx = #data
@@ -283,6 +271,10 @@ function love.draw()
             end
 
             drag_speed = 0.02
+            tmp_bool[0] = not (spawn_data._two_point_mode or false)
+            if imgui.Checkbox("Use Peak", tmp_bool) then
+                spawn_data._two_point_mode = not tmp_bool[0]
+            end
 
             tmp_float2[0] = spawn_data.curveStart
             tmp_float2[1] = spawn_data.startWeight
@@ -291,11 +283,13 @@ function love.draw()
                 spawn_data.startWeight = tmp_float2[1]
             end
 
-            tmp_float2[0] = spawn_data.curvePeak
-            tmp_float2[1] = spawn_data.peakWeight
-            if imgui.DragFloat2("Peak", tmp_float2, drag_speed) then
-                spawn_data.curvePeak = tmp_float2[0]
-                spawn_data.peakWeight = tmp_float2[1]
+            if not spawn_data._two_point_mode then
+                tmp_float2[0] = spawn_data.curvePeak
+                tmp_float2[1] = spawn_data.peakWeight
+                if imgui.DragFloat2("Peak", tmp_float2, drag_speed) then
+                    spawn_data.curvePeak = tmp_float2[0]
+                    spawn_data.peakWeight = tmp_float2[1]
+                end
             end
 
             tmp_float2[0] = spawn_data.curveEnd
@@ -303,6 +297,11 @@ function love.draw()
             if imgui.DragFloat2("End", tmp_float2, drag_speed) then
                 spawn_data.curveEnd = tmp_float2[0]
                 spawn_data.endWeight = tmp_float2[1]
+            end
+
+            if spawn_data._two_point_mode then
+                spawn_data.curvePeak = spawn_data.curveEnd
+                spawn_data.peakWeight = spawn_data.endWeight
             end
             
             imgui.PopItemWidth()

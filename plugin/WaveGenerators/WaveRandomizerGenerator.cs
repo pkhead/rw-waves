@@ -49,7 +49,7 @@ class WaveRandomizerGenerator : IWaveGenerator
 
     public WaveRandomizerGenerator(int? seed = null)
     {
-        var randomDataPath = AssetManager.ResolveFilePath("wavedata/randomdata.json");
+        var randomDataPath = AssetManager.ResolveFilePath("wavedata/randconfig.json");
         creatureData = Serializer.Parse<CreatureRandomData[]>(File.ReadAllText(randomDataPath));
 
         if (seed is not null)
@@ -254,7 +254,7 @@ class WaveRandomizerGenerator : IWaveGenerator
             pointsRemaining -= data.Points;
             if (data.Creatures is not null)
             {
-                Debug.Log($"spawn group {data.Creature[0]}");
+                Debug.Log($"spawn group {data.Creatures[0]}, et al.");
                 foreach (var creatureName in data.Creatures)
                 {
                     var template = new CreatureTemplate.Type(creatureName, false);
