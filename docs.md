@@ -69,8 +69,7 @@ type Spawn = {
 $$
 p(x) = \begin{cases}
         (w_1 - w_0) \left(0.01\right)^{\left(\frac{t_1 - x}{t_1 - t_0}\right)^2} + w_0, & x\leq t_1 \\
-        (w_1 - w_2) \left(0.01\right)^{\left(\frac{x - t_1}{t_2 - t_1}\right)^2} + w_2, & x\gt t_1 \\
-        
+        (w_1 - w_2) \left(0.01\right)^{\left(\frac{x - t_1}{t_2 - t_1}\right)^2} + w_2, & x\gt t_1 \\ 
     \end{cases}
 $$
 
