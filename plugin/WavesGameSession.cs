@@ -29,8 +29,6 @@ class WavesGameSession : ArenaGameSession
 
     public WavesGameSession(RainWorldGame game) : base(game)
     {
-        waveGenerator = new WaveRandomizerGenerator();
-
         rainCycleTimeInMinutes = 0;
         trackedCreatures = new();
         permaDeadPlayers = new();
@@ -50,6 +48,17 @@ class WavesGameSession : ArenaGameSession
         {
             wave = extras.currentWave - 1;
             initialTotalTime = extras.totalTime;
+
+            switch (extras.generatorType)
+            {
+                case WaveGeneratorType.Preset:
+                    waveGenerator = new WavePresetGenerator(extras.presetName);
+                    break;
+
+                case WaveGeneratorType.Randomizer:
+                    waveGenerator = new WaveRandomizerGenerator();
+                    break;
+            }
         }
 
         if (noRain is null)

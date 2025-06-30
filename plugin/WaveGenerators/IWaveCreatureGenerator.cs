@@ -10,3 +10,8 @@ interface IWaveGenerator
 
     public CreatureSpawnData[] GenerateWave(int waveNumber, bool hasSkyExit);
 }
+
+public enum WaveGeneratorType
+{
+    Preset, Randomizer
+}

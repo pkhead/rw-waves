@@ -25,6 +25,9 @@ static class ArenaSittingHooks
         public WavesDifficultyOption difficulty = WavesDifficultyOption.Hard;
         public int respawnWait = 0;
 
+        public WaveGeneratorType generatorType;
+        public string presetName;
+
         public ArenaSittingExtras()
         {}
     }
@@ -51,6 +54,8 @@ static class ArenaSittingHooks
                 data.respawnWait = setupData.wavesRespawnWait;
                 data.playerLives = new();
                 data.playerRespawnWait = new();
+                data.generatorType = setupData.generatorType;
+                data.presetName = setupData.presetName;
             }
         };
 
@@ -228,6 +233,8 @@ static class ArenaSittingHooks
                     {
                         WavesMod.Instance.logger.LogInfo("Save arena session");
                         text += "WAVES<ssB>";
+                        text += $"generatorType<sbpB>{(int)extras.generatorType}<sbpA>";
+                        text += $"presetName<sbpB>{extras.presetName}<sbpA>";
                         text += $"currentWave<sbpB>{extras.currentWave}<sbpA>";
                         text += $"totalTime<sbpB>{extras.totalTime}<sbpA>";
                         text += $"difficulty<sbpB>{extras.difficulty}<sbpA>";
@@ -331,6 +338,18 @@ static class ArenaSittingHooks
                                         {
                                             extras.playerRespawnWait.Add(int.Parse(sbcSplit[i], CultureInfo.InvariantCulture));
                                         }
+                                        break;
+                                    }
+
+                                    case "generatorType":
+                                    {
+                                        extras.generatorType = (WaveGeneratorType) int.Parse(sbpBSplit[1], CultureInfo.InvariantCulture);
+                                        break;
+                                    }
+
+                                    case "presetName":
+                                    {
+                                        extras.presetName = sbpBSplit[1];
                                         break;
                                     }
                                     

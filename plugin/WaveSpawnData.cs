@@ -40,9 +40,9 @@ class WaveSpawnData
         WavesMod.Instance.logger.LogInfo("Preset directory: " + PresetDirectory);
     }
 
-    public static WavesPreset Read()
+    public static WavesPreset Read(string presetName)
     {
-        var jsonFile = Path.Combine(PresetDirectory, SelectedPreset + ".json");
+        var jsonFile = Path.Combine(PresetDirectory, presetName + ".json");
         using var stream = File.OpenText(jsonFile);
         var data = CompactJson.Serializer.Parse<WavesPreset>(stream);
 

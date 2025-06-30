@@ -25,30 +25,23 @@ class WaveRandomizerGenerator : IWaveGenerator
         [JsonProperty("max")]
         public int Max { get; set; } = int.MaxValue;
 
-        [JsonProperty("center")]
-        public float Center { get; set; }
+        [JsonProperty("curveStart")]
+        public float CurveStart { get; set; }
 
-        [JsonProperty("variance")]
-        public float Variance { get; set; }
+        [JsonProperty("startWeight")]
+        public float StartWeight { get; set; } = 0.0f;
 
-        [JsonProperty("constantL")]
-        public float ConstantL { get; set; } = 0.0f;
+        [JsonProperty("curvePeak")]
+        public float CurvePeak { get; set; }
+        
+        [JsonProperty("peakWeight")]
+        public float PeakWeight { get; set; }
 
-        [JsonProperty("constantR")]
-        public float ConstantR { get; set; } = 0.0f;
+        [JsonProperty("curveEnd")]
+        public float CurveEnd { get; set; }
 
-        [JsonProperty("constant")]
-        public float Constant
-        {
-            set
-            {
-                ConstantL = value;
-                ConstantR = value;
-            }
-        }
-
-        [JsonProperty("peak")]
-        public float Peak { get; set; } = 1.0f;
+        [JsonProperty("endWeight")]
+        public float EndWeight { get; set; }
     }
 
     private CreatureRandomData[] creatureData;
@@ -104,11 +97,19 @@ class WaveRandomizerGenerator : IWaveGenerator
             if (!filterFunc(creatureData[i])) continue;
 
             var data = creatureData[i];
-            float baseline = wave < data.Center ? data.ConstantL : data.ConstantR;
-            float x = wave - data.Center;
-            var weight = (data.Peak - baseline) * Mathf.Exp(-(x*x) / (2 * data.Variance)) + baseline;
+            float weight;
+            if (wave <= data.CurvePeak)
+            {
+                var p = (data.CurvePeak - wave) / (data.CurvePeak - data.CurveStart);
+                weight = (data.PeakWeight - data.StartWeight) * Mathf.Pow(0.01f, p*p) + data.StartWeight;
+            }
+            else
+            {
+                var p = (wave - data.CurvePeak) / (data.CurveEnd - data.CurvePeak);
+                weight = (data.PeakWeight - data.EndWeight) * Mathf.Pow(0.01f, p*p) + data.EndWeight;
+            }
 
-            if (weight >= 0.01)
+            if (weight >= 0.01f)
                 probabilityWeights.Add((weight, creatureData[i]));
         }
 

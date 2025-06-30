@@ -29,6 +29,9 @@ static class MenuHooks
         public WavesDifficultyOption wavesDifficulty = WavesDifficultyOption.Hard;
         public int wavesRespawnWait = 0;
 
+        public WaveGeneratorType generatorType = WaveGeneratorType.Preset;
+        public string presetName = WaveSpawnData.DefaultPresetName;
+
         public GameTypeSetupExtras()
         {}
     }

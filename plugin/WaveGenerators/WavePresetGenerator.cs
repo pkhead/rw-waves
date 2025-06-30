@@ -7,9 +7,9 @@ class WavePresetGenerator : IWaveGenerator
     public int WaveCount => waveData.Length;
     private readonly WaveSpawnData.WaveData[] waveData;
 
-    public WavePresetGenerator()
+    public WavePresetGenerator(string presetName)
     {
-        waveData = WaveSpawnData.Read().Waves;
+        waveData = WaveSpawnData.Read(presetName).Waves;
     }
 
     public CreatureSpawnData[] GenerateWave(int wave, bool hasSkyExit)
