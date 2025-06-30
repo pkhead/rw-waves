@@ -54,35 +54,38 @@ type Spawn = {
     max?: int                   the maximum number of this Spawn allowed in a wave.
 
     // probability weight fields (read Probability Weight Formula section)
-    center: float
-    variance: float
-    peak?: float
+    curveStart: float
+    startWeight: float
 
-    constant?: float
-    constantL?: float
-    constantR?: float
+    curvePeak: float
+    peakWeight: float
+
+    curveEnd: float
+    endWeight: float
 }
 ```
 
 ## Probability Weight Formula
 $$
 p(x) = \begin{cases}
-        (m - c_0) e^{-\frac{(x-\mu)^2}{2\sigma^2}} + c_0, & x\leq c \\
-        (m - c_1) e^{-\frac{(x-\mu)^2}{2\sigma^2}} + c_1, & x\gt c \\
+        (w_1 - w_0) \left(0.01\right)^{\left(\frac{t_1 - x}{t_1 - t_0}\right)^2} + w_0, & x\leq t_1 \\
+        (w_1 - w_2) \left(0.01\right)^{\left(\frac{x - t_1}{t_2 - t_1}\right)^2} + w_2, & x\gt t_1 \\
+        
     \end{cases}
 $$
 
+
 where:
 - $x$: wave number starting from 0.
-- $\mu$: "center" field.
-- $\sigma^2$: "variance" field.
-- $m$: "peak" field.
-- $c_0$: "constantL" or "constant" field.
-- $c_1$: "constantR" or "constant" field.
-- $e$: Euler's number.
+- $w_0$: `startWeight` field.
+- $w_1$: `peakWeight` field.
+- $w_2$: `endWeight` field.
+- $t_0$: `curveStart` field.
+- $t_1$: `curvePeak` field.
+- $t_2$: `curveEnd` field.
 
 note that:
 - a $p(x)$ value of less than 0.01 (1%) will be flushed to 0.
 - probability weights are not absolute values; they only have meaning relative to the probability weights of other creatures.
 
-playground: https://www.desmos.com/calculator/pcjo2sd6f2
+playground: https://www.desmos.com/calculator/o9h7oqfwir
