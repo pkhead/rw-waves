@@ -176,6 +176,16 @@ static class MenuHooks
                     // add spawn settings interface
                     var extras = multiplayerMenuExtras.GetOrCreateValue(self);
                     extras.spawnSettingsInterface = new SpawnSettingsInterface(self, self.pages[0]);
+                    extras.spawnSettingsInterface.pos.Set(0f, 0f);
+                    extras.spawnSettingsInterface.SettingsChanged += (SpawnSettingsInterface sender) =>
+                    {
+                        if (gameTypeSetupCwt.TryGetValue(self.GetGameTypeSetup, out var extras))
+                        {
+                            extras.generatorType = sender.generatorType;
+                            extras.presetName = sender.presetName;
+                        }
+                    };
+
                     self.pages[0].subObjects.Add(extras.spawnSettingsInterface);
                 });
             }
