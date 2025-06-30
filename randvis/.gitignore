@@ -1,0 +1,10 @@
+uiSprites.png
+uiSprites.json
+cimgui/
+
+*.ttf
+*.dylib
+*.dll
+*.so
+
+.vscode
